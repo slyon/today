@@ -44,17 +44,27 @@ class MainWindow:
         self.win.resize_object_add(mainbox)
         mainbox.show()
 
+        timeframe = elementary.Frame(self.win)
+        timeframe.style_set('pad_medium')
+
+        timebox = elementary.Box(self.win)
+        timebox.show()
+
         self.timeLabel = elementary.Label(self.win)
         self.timeLabel.label_set("")
         self.timeLabel.scale_set(5.0)
-        mainbox.pack_end(self.timeLabel)
+        timebox.pack_end(self.timeLabel)
         self.timeLabel.show()
 
         self.dateLabel = elementary.Label(self.win)
         self.dateLabel.label_set("")
         self.dateLabel.scale_set(1.75)
-        mainbox.pack_end(self.dateLabel)
+        timebox.pack_end(self.dateLabel)
         self.dateLabel.show()
+
+        timeframe.content_set(timebox)
+        timeframe.show()
+        mainbox.pack_end(timeframe)
 
         subBox = elementary.Box(self.win)
         subBox.size_hint_weight_set(1.0, 0.1)
@@ -80,13 +90,17 @@ class MainWindow:
         subBox.pack_end(self.messagesLabel);
         self.messagesLabel.show()
 
+        toggleframe = elementary.Frame(self.win)
+        toggleframe.style_set('pad_medium')
         self.toggle = elementary.Toggle(self.win)
         self.toggle.label_set("")
-        self.toggle.states_labels_set("unlocked", "slide to unlock")
+        self.toggle.states_labels_set("", "slide to unlock")
         self.toggle.scale_set(2.0)
         self.toggle.changed = self.toggleChanged
         self.toggle.state_set(False)
-        mainbox.pack_end(self.toggle)
+        toggleframe.content_set(self.toggle)
+        toggleframe.show()
+        mainbox.pack_end(toggleframe)
         self.toggle.show()
 
     ### functions ###
@@ -153,11 +167,11 @@ class MainWindow:
         self.win.hide()
 
     def updateScreen(self):
-        """Updates the time and date labels on the screen every second"""
+        """Updates the time and date labels on the screen every 10 seconds"""
         t = time.localtime()
-        self.timeLabel.label_set("%02d:%02d" % (t.tm_hour, t.tm_min))
-        self.dateLabel.label_set("%02d-%02d-%04d" % (t.tm_mon, t.tm_mday,t.tm_year))
-        ecore.timer_add(1, self.updateScreen)
+        self.timeLabel.label_set(time.strftime(self.config.get("format", "time"), t))
+        self.dateLabel.label_set(time.strftime(self.config.get("format", "date"), t))
+        ecore.timer_add(10, self.updateScreen)
 
     def destroy(obj, event, *args, **kargs):
         """Closes the application"""
