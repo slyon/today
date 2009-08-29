@@ -13,6 +13,6 @@ inherit setuptools
 SRC_URI = "git://github.com/slyon/today.git;protocol=http"
 S = "${WORKDIR}/git"
 
-FILES_${PN} += "/etc"
+CONFFILES_${PN} += "/etc"
 FILES_${PN} += "/usr/share/shr-today"
 
