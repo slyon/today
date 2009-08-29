@@ -19,7 +19,8 @@ dist = setup( name='shr-today',
     download_url='git://github.com/slyon/today.git',
     license='GNU GPL',
     scripts=['shr-today'],
-    data_files=[('/home/root/.shr-today', ['data/wallpaper.png','data/shr-today.conf'])]
+    data_files=[('/etc', ['data/shr-today.conf']),
+        ('/usr/share/shr-today', ['data/wallpaper.png'])]
 )
 
 installCmd = dist.get_command_obj(command="install_data")
