@@ -18,11 +18,14 @@ class MainWindow:
     def __init__(self):
         self.config = ConfigParser.ConfigParser()
         self.config.read("/etc/shr-today.conf")
+        self.SMOOTH_SUSPEND = self.config.get("general", "smooth_suspend")
+        self.AUX_LOCK = self.config.get("general", "aux_lock")
         self.BACKGROUND = self.config.get("background", "image")
 
         self.bus = dbus.SystemBus(mainloop = e_dbus.DBusEcoreMainLoop())
         self.bus.add_signal_receiver(self.dbus_suspend_handler, dbus_interface="org.freesmartphone.Usage", signal_name="SystemAction")
-        self.bus.add_signal_receiver(self.dbus_aux_handler, dbus_interface="org.freesmartphone.Device.Input", signal_name="Event")
+        if self.AUX_LOCK == "True":
+            self.bus.add_signal_receiver(self.dbus_aux_handler, dbus_interface="org.freesmartphone.Device.Input", signal_name="Event")
         self.bus.add_signal_receiver(self.dbus_idle_handler, dbus_interface="org.freesmartphone.Device.IdleNotifier", signal_name="State")
         self.bus.add_signal_receiver(self.IncomingCall, dbus_interface="org.freesmartphone.GSM.Call", signal_name="CallStatus")
         self.bus.add_signal_receiver(self.NewMissedCalls, dbus_interface="org.freesmartphone.PIM.Calls", signal_name="NewMissedCalls")
@@ -107,11 +110,10 @@ class MainWindow:
     def dbus_suspend_handler(self, name):
         """Locks the screen on suspend"""
         if name == "SUSPEND":
-            print "SetBacklightPower(False)"
-            self.proxy.SetBacklightPower(False)
+            if self.SMOOTH_SUSPEND == "True":
+                self.proxy.SetBacklightPower(False)
             self.lockScreen()
-        elif name == "RESUME":
-            print "SetBacklightPower(True)"
+        elif name == "RESUME" and self.SMOOTH_SUSPEND == "True":
             self.proxy.SetBacklightPower(True)
 
     def dbus_aux_handler(self, name, action, seconds):
