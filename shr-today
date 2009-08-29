@@ -29,7 +29,7 @@ class MainWindow:
         self.bus.add_signal_receiver(self.UnreadMessages, dbus_interface="org.freesmartphone.PIM.Messages", signal_name="UnreadMessages")
         self.proxy = self.bus.get_object('org.freesmartphone.odeviced', '/org/freesmartphone/Device/Display/0')
 
-        self.win = elementary.Window("today", elementary.ELM_WIN_BASIC)
+        self.win = elementary.Window("shr-today", elementary.ELM_WIN_BASIC)
         self.win.title_set("Today")
         self.win.destroy = self.destroy
 
