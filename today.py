@@ -1,5 +1,13 @@
 #!/usr/bin/env python
 #-*- coding: utf-8 -*-
+"""
+today
+
+(C) 2009 Lukas Märdian <lukasmaerdian@googlemail.com>
+GPLv2 or later
+
+Simple screen-locking app using opimd.
+"""
 
 import elementary, ecore
 import dbus, e_dbus
