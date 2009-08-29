@@ -9,7 +9,7 @@ import ConfigParser
 class MainWindow:
     def __init__(self):
         self.config = ConfigParser.ConfigParser()
-        self.config.read("today.ini")
+        self.config.read("today.conf")
         self.BACKGROUND = self.config.get("background", "image")
 
         self.bus = dbus.SystemBus(mainloop = e_dbus.DBusEcoreMainLoop())
