@@ -20,7 +20,8 @@ dist = setup( name='shr-today',
     license='GNU GPL',
     scripts=['shr-today'],
     data_files=[('/etc', ['data/shr-today.conf']),
-        ('/usr/share/shr-today', ['data/wallpaper.png'])]
+        ('/usr/share/shr-today', ['data/wallpaper.png']),
+        ('/etc/X11/Xsession.d/', ['data/89shr-today'])]
 )
 
 installCmd = dist.get_command_obj(command="install_data")
