@@ -4,6 +4,7 @@
 today
 
 (C) 2009 Lukas Märdian <lukasmaerdian@googlemail.com>
+(C) 2009 Sebastian Krzyszkowiak <seba.dos1@gmail.com>
 GPLv2 or later
 
 Simple screen-locking app using opimd.
@@ -22,6 +23,7 @@ class MainWindow:
         self.AUX_LOCK = self.config.get("general", "aux_lock")
         self.BACKGROUND = self.config.get("background", "image")
         self.locked = False
+        self.proxies = False
 
         self.bus = dbus.SystemBus(mainloop = e_dbus.DBusEcoreMainLoop())
         self.bus.add_signal_receiver(self.dbus_suspend_handler, dbus_interface="org.freesmartphone.Usage", signal_name="SystemAction")
@@ -31,7 +33,7 @@ class MainWindow:
         self.bus.add_signal_receiver(self.IncomingCall, dbus_interface="org.freesmartphone.GSM.Call", signal_name="CallStatus")
         self.bus.add_signal_receiver(self.NewMissedCalls, dbus_interface="org.freesmartphone.PIM.Calls", signal_name="NewMissedCalls")
         self.bus.add_signal_receiver(self.UnreadMessages, dbus_interface="org.freesmartphone.PIM.Messages", signal_name="UnreadMessages")
-        self.proxy = dbus.Interface(self.bus.get_object('org.freesmartphone.odeviced', '/org/freesmartphone/Device/Display/0'), dbus_interface='org.freesmartphone.Device.Display')
+        self.make_proxies()
 
         self.win = elementary.Window("shr-today", elementary.ELM_WIN_BASIC)
         self.win.title_set("Today")
@@ -98,7 +100,7 @@ class MainWindow:
         toggleframe.style_set('pad_medium')
         self.toggle = elementary.Toggle(self.win)
         self.toggle.label_set("")
-        self.toggle.states_labels_set("", "slide to unlock")
+        self.toggle.states_labels_set("unlock", "slide to unlock")
         self.toggle.scale_set(2.0)
         self.toggle.changed = self.toggleChanged
         self.toggle.state_set(False)
@@ -108,13 +110,33 @@ class MainWindow:
         self.toggle.show()
 
     ### functions ###
+    def make_proxies(self):
+        if not self.proxies:
+            try:
+                self.proxy = dbus.Interface(self.bus.get_object('org.freesmartphone.odeviced', '/org/freesmartphone/Device/Display/0'), dbus_interface='org.freesmartphone.Device.Display')
+                self.contactsproxy = dbus.Interface(self.bus.get_object('org.freesmartphone.opimd', '/org/freesmartphone/PIM/Contacts'), dbus_interface='org.freesmartphone.PIM.Contacts')
+                self.proxies = True
+                return True
+            except:
+                return False
+        else:
+            return True
+
+    def resolve_number(self, number):
+        name = ''
+        if self.make_proxies():
+            name = self.contactsproxy.GetSingleEntrySingleField({'Phone':'tel:'+number}, 'Name')
+        if not name:
+            name = number
+        return name
+
     def dbus_suspend_handler(self, name):
         """Locks the screen on suspend"""
         if name == "SUSPEND":
-            if self.SMOOTH_SUSPEND == "True":
+            if self.SMOOTH_SUSPEND == "True" and self.make_proxies():
                 self.proxy.SetBacklightPower(False)
             self.lockScreen()
-        elif name == "RESUME" and self.SMOOTH_SUSPEND == "True":
+        elif name == "RESUME" and self.SMOOTH_SUSPEND == "True" and self.make_proxies():
             self.proxy.SetBacklightPower(True)
 
     def dbus_aux_handler(self, name, action, seconds):
@@ -133,7 +155,7 @@ class MainWindow:
     def IncomingCall(self, *args):
         """Updates screen on incoming call"""
         if args[1] == "incoming":
-            self.IncomingCallLabel.label_set(args[2]['peer']+" is calling")
+            self.IncomingCallLabel.label_set(self.resolve_number(args[2]['peer'])+" is calling")
         elif args[1] == "active":
             self.IncomingCallLabel.label_set("active call")
         elif args[1] == "release":
