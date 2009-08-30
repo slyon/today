@@ -21,6 +21,7 @@ class MainWindow:
         self.SMOOTH_SUSPEND = self.config.get("general", "smooth_suspend")
         self.AUX_LOCK = self.config.get("general", "aux_lock")
         self.BACKGROUND = self.config.get("background", "image")
+        self.locked = False
 
         self.bus = dbus.SystemBus(mainloop = e_dbus.DBusEcoreMainLoop())
         self.bus.add_signal_receiver(self.dbus_suspend_handler, dbus_interface="org.freesmartphone.Usage", signal_name="SystemAction")
@@ -30,7 +31,7 @@ class MainWindow:
         self.bus.add_signal_receiver(self.IncomingCall, dbus_interface="org.freesmartphone.GSM.Call", signal_name="CallStatus")
         self.bus.add_signal_receiver(self.NewMissedCalls, dbus_interface="org.freesmartphone.PIM.Calls", signal_name="NewMissedCalls")
         self.bus.add_signal_receiver(self.UnreadMessages, dbus_interface="org.freesmartphone.PIM.Messages", signal_name="UnreadMessages")
-        self.proxy = self.bus.get_object('org.freesmartphone.odeviced', '/org/freesmartphone/Device/Display/0')
+        self.proxy = dbus.Interface(self.bus.get_object('org.freesmartphone.odeviced', '/org/freesmartphone/Device/Display/0'), dbus_interface='org.freesmartphone.Device.Display')
 
         self.win = elementary.Window("shr-today", elementary.ELM_WIN_BASIC)
         self.win.title_set("Today")
@@ -119,7 +120,10 @@ class MainWindow:
     def dbus_aux_handler(self, name, action, seconds):
         """Locks the screen on AUX keypress < 2 sec"""
         if name == "AUX" and action == "released" and int(seconds) < 2:
-            self.lockScreen()
+            if self.locked:
+                self.unlockScreen()
+            else:
+                self.lockScreen()
 
     def dbus_idle_handler(self, name):
         """Locks the screen on FSO 'lock' signal"""
@@ -161,11 +165,13 @@ class MainWindow:
 
     def lockScreen(self):
         """Locks the screen"""
-    	self.win.fullscreen_set(True)
+        self.locked = True
+        self.win.fullscreen_set(True)
         self.win.show()
 
     def unlockScreen(self):
         """Unlocks the screen"""
+        self.locked = False
         self.win.hide()
 
     def updateScreen(self):
