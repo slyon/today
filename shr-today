@@ -50,6 +50,34 @@ class MainWindow:
         self.win.resize_object_add(mainbox)
         mainbox.show()
 
+        # Panel
+        panelBox = elementary.Box(self.win)
+        panelBox.size_hint_align_set(-1.0, 0.0)
+        panelBox.horizontal_set(True)
+        mainbox.pack_end(panelBox)
+        panelBox.show()
+
+        gsmBox = elementary.Box(self.win)
+        gsmBox.size_hint_weight_set(0.5, 0.5)
+        gsmBox.size_hint_align_set(0.0, 0.0)
+        panelBox.pack_end(gsmBox)
+        gsmBox.show()
+        self.gsmLabel = elementary.Label(self.win)
+        self.gsmLabel.label_set("")
+        gsmBox.pack_end(self.gsmLabel)
+        self.gsmLabel.show()
+
+        batteryBox = elementary.Box(self.win)
+        batteryBox.size_hint_weight_set(0.5, 0.5)
+        batteryBox.size_hint_align_set(1.0, 0.0)
+        panelBox.pack_end(batteryBox)
+        batteryBox.show()
+        self.batteryLabel = elementary.Label(self.win)
+        self.batteryLabel.label_set("")
+        batteryBox.pack_end(self.batteryLabel)
+        self.batteryLabel.show()
+        #/Panel
+
         timeframe = elementary.Frame(self.win)
         timeframe.style_set('pad_medium')
 
@@ -116,6 +144,8 @@ class MainWindow:
                 self.proxy = dbus.Interface(self.bus.get_object('org.freesmartphone.odeviced', '/org/freesmartphone/Device/Display/0'), dbus_interface='org.freesmartphone.Device.Display')
                 self.contactsproxy = dbus.Interface(self.bus.get_object('org.freesmartphone.opimd', '/org/freesmartphone/PIM/Contacts'), dbus_interface='org.freesmartphone.PIM.Contacts')
                 self.proxies = True
+                self.gsmproxy = dbus.Interface(self.bus.get_object('org.freesmartphone.ogsmd', '/org/freesmartphone/GSM/Device'), dbus_interface='org.freesmartphone.GSM.Network')
+                self.batteryproxy = dbus.Interface(self.bus.get_object('org.freesmartphone.odeviced', '/org/freesmartphone/Device/PowerSupply/battery'), dbus_interface='org.freesmartphone.Device.PowerSupply')
                 return True
             except:
                 return False
@@ -201,6 +231,14 @@ class MainWindow:
         t = time.localtime()
         self.timeLabel.label_set(time.strftime(self.config.get("format", "time"), t))
         self.dateLabel.label_set(time.strftime(self.config.get("format", "date"), t))
+        gsmStatus = self.gsmproxy.GetStatus()
+        batteryStatus = self.batteryproxy.GetCapacity()
+        if gsmStatus['provider'] == " ":
+            gsmProvider = "GSM"
+        else:
+            gsmProvider = gsmStatus['provider']
+        self.gsmLabel.label_set(gsmProvider+": "+str(gsmStatus['strength'])+"%")
+        self.batteryLabel.label_set("Battery: "+str(batteryStatus)+"%")
         ecore.timer_add(10, self.updateScreen)
 
     def destroy(obj, event, *args, **kargs):
