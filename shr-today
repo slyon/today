@@ -34,7 +34,6 @@ class MainWindow:
         self.bus.add_signal_receiver(self.NewMissedCalls, dbus_interface="org.freesmartphone.PIM.Calls", signal_name="NewMissedCalls")
         self.bus.add_signal_receiver(self.UnreadMessages, dbus_interface="org.freesmartphone.PIM.Messages", signal_name="UnreadMessages")
         self.bus.add_signal_receiver(self.gsmStatus, dbus_interface="org.freesmartphone.GSM.Network", signal_name="Status")
-        self.bus.add_signal_receiver(self.batCapacity, dbus_interface="org.freesmartphone.Device.PowerSupply", signal_name="Capacity")
         self.make_proxies()
 
         self.win = elementary.Window("shr-today", elementary.ELM_WIN_BASIC)
@@ -140,6 +139,7 @@ class MainWindow:
             try:
                 self.proxy = dbus.Interface(self.bus.get_object('org.freesmartphone.odeviced', '/org/freesmartphone/Device/Display/0'), dbus_interface='org.freesmartphone.Device.Display')
                 self.contactsproxy = dbus.Interface(self.bus.get_object('org.freesmartphone.opimd', '/org/freesmartphone/PIM/Contacts'), dbus_interface='org.freesmartphone.PIM.Contacts')
+                self.batteryproxy = self.contactsproxy = dbus.Interface(self.bus.get_object('org.freesmartphone.odeviced', '/org/freesmartphone/Device/PowerSupply/battery'), dbus_interface='org.freesmartphone.Device.PowerSupply')
                 self.proxies = True
                 return True
             except:
@@ -184,10 +184,6 @@ class MainWindow:
         else:
             gsmProvider = args['provider']
         self.gsmLabel.label_set(gsmProvider+": "+str(args['strength'])+"%")
-
-    def batCapacity(self, cap):
-        """Updates Battery-Info on change"""
-        self.batteryLabel.label_set("Battery: "+str(cap)+"%")
 
     def IncomingCall(self, *args):
         """Updates screen on incoming call"""
@@ -239,6 +235,9 @@ class MainWindow:
         self.timeLabel.label_set(time.strftime(self.config.get("format", "time"), t))
         self.dateLabel.label_set(time.strftime(self.config.get("format", "date"), t))
         ecore.timer_add(10, self.updateScreen)
+        if self.make_proxies():
+            cap = self.batteryproxy.GetCapacity()
+            self.batteryLabel.label_set("Battery: "+str(cap)+"%")
 
     def destroy(obj, event, *args, **kargs):
         """Closes the application"""
