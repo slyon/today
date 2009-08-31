@@ -138,7 +138,8 @@ class MainWindow:
             try:
                 self.proxy = dbus.Interface(self.bus.get_object('org.freesmartphone.odeviced', '/org/freesmartphone/Device/Display/0'), dbus_interface='org.freesmartphone.Device.Display')
                 self.contactsproxy = dbus.Interface(self.bus.get_object('org.freesmartphone.opimd', '/org/freesmartphone/PIM/Contacts'), dbus_interface='org.freesmartphone.PIM.Contacts')
-                self.gsmproxy = dbus.Interface(self.bus.get_object('org.freesmartphone.ogsmd', '/org/freesmartphone/GSM/Device'), dbus_interface='org.freesmartphone.GSM.Network')
+                #FIXME: I'm broken
+                #self.gsmproxy = dbus.Interface(self.bus.get_object('org.freesmartphone.ogsmd', '/org/freesmartphone/GSM/Device'), dbus_interface='org.freesmartphone.GSM.Network')
                 self.batteryproxy = dbus.Interface(self.bus.get_object('org.freesmartphone.odeviced', '/org/freesmartphone/Device/PowerSupply/battery'), dbus_interface='org.freesmartphone.Device.PowerSupply')
                 self.proxies = True
                 return True
@@ -223,21 +224,22 @@ class MainWindow:
 
     def updateScreen(self):
         """Updates the time and date labels on the screen every 10 seconds"""
+        ecore.timer_add(10, self.updateScreen)
         t = time.localtime()
         self.timeLabel.label_set(time.strftime(self.config.get("format", "time"), t))
         self.dateLabel.label_set(time.strftime(self.config.get("format", "date"), t))
         if self.make_proxies():
-            gsmStatus = self.gsmproxy.GetStatus()
+            #FIXME: I'm broken
+            #gsmStatus = self.gsmproxy.GetStatus()
             batteryStatus = self.batteryproxy.GetCapacity()
-            if gsmStatus['provider'] == " ":
-                gsmProvider = "GSM"
-            else:
-                gsmProvider = gsmStatus['provider']
-            self.gsmLabel.label_set(gsmProvider+": "+str(gsmStatus['strength'])+"%")
+            #if gsmStatus['provider'] == " ":
+            #    gsmProvider = "GSM"
+            #else:
+            #    gsmProvider = gsmStatus['provider']
+            #self.gsmLabel.label_set(gsmProvider+": "+str(gsmStatus['strength'])+"%")
             self.batteryLabel.label_set("Battery: "+str(batteryStatus)+"%")
-        else:
-            self.gsmLabel.label_set("Could not connect to FSO")
-        ecore.timer_add(10, self.updateScreen)
+        #else:
+            #self.gsmLabel.label_set("Could not connect to FSO")
 
     def destroy(obj, event, *args, **kargs):
         """Closes the application"""
