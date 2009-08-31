@@ -78,9 +78,6 @@ class MainWindow:
         self.batteryLabel.show()
         #/Panel
 
-        timeframe = elementary.Frame(self.win)
-        timeframe.style_set('pad_medium')
-
         timebox = elementary.Box(self.win)
         timebox.show()
 
@@ -96,9 +93,7 @@ class MainWindow:
         timebox.pack_end(self.dateLabel)
         self.dateLabel.show()
 
-        timeframe.content_set(timebox)
-        timeframe.show()
-        mainbox.pack_end(timeframe)
+        mainbox.pack_end(timebox)
 
         subBox = elementary.Box(self.win)
         subBox.size_hint_weight_set(1.0, 0.1)
@@ -143,9 +138,9 @@ class MainWindow:
             try:
                 self.proxy = dbus.Interface(self.bus.get_object('org.freesmartphone.odeviced', '/org/freesmartphone/Device/Display/0'), dbus_interface='org.freesmartphone.Device.Display')
                 self.contactsproxy = dbus.Interface(self.bus.get_object('org.freesmartphone.opimd', '/org/freesmartphone/PIM/Contacts'), dbus_interface='org.freesmartphone.PIM.Contacts')
-                self.proxies = True
                 self.gsmproxy = dbus.Interface(self.bus.get_object('org.freesmartphone.ogsmd', '/org/freesmartphone/GSM/Device'), dbus_interface='org.freesmartphone.GSM.Network')
                 self.batteryproxy = dbus.Interface(self.bus.get_object('org.freesmartphone.odeviced', '/org/freesmartphone/Device/PowerSupply/battery'), dbus_interface='org.freesmartphone.Device.PowerSupply')
+                self.proxies = True
                 return True
             except:
                 return False
@@ -231,14 +226,17 @@ class MainWindow:
         t = time.localtime()
         self.timeLabel.label_set(time.strftime(self.config.get("format", "time"), t))
         self.dateLabel.label_set(time.strftime(self.config.get("format", "date"), t))
-        gsmStatus = self.gsmproxy.GetStatus()
-        batteryStatus = self.batteryproxy.GetCapacity()
-        if gsmStatus['provider'] == " ":
-            gsmProvider = "GSM"
+        if self.make_proxies():
+            gsmStatus = self.gsmproxy.GetStatus()
+            batteryStatus = self.batteryproxy.GetCapacity()
+            if gsmStatus['provider'] == " ":
+                gsmProvider = "GSM"
+            else:
+                gsmProvider = gsmStatus['provider']
+            self.gsmLabel.label_set(gsmProvider+": "+str(gsmStatus['strength'])+"%")
+            self.batteryLabel.label_set("Battery: "+str(batteryStatus)+"%")
         else:
-            gsmProvider = gsmStatus['provider']
-        self.gsmLabel.label_set(gsmProvider+": "+str(gsmStatus['strength'])+"%")
-        self.batteryLabel.label_set("Battery: "+str(batteryStatus)+"%")
+            self.gsmLabel.label_set("Could not connect to FSO")
         ecore.timer_add(10, self.updateScreen)
 
     def destroy(obj, event, *args, **kargs):

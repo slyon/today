@@ -1,8 +1,6 @@
+* don't fail if GSM not available
 * use default background from illume edj, leave picture as option
 * show next alarm
 * upcoming dates
-* gsm provider
-* gsm status
-* battery status
 * location
   -> weather
