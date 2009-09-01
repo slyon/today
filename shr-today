@@ -139,7 +139,7 @@ class MainWindow:
             try:
                 self.proxy = dbus.Interface(self.bus.get_object('org.freesmartphone.odeviced', '/org/freesmartphone/Device/Display/0'), dbus_interface='org.freesmartphone.Device.Display')
                 self.contactsproxy = dbus.Interface(self.bus.get_object('org.freesmartphone.opimd', '/org/freesmartphone/PIM/Contacts'), dbus_interface='org.freesmartphone.PIM.Contacts')
-                self.batteryproxy = self.contactsproxy = dbus.Interface(self.bus.get_object('org.freesmartphone.odeviced', '/org/freesmartphone/Device/PowerSupply/battery'), dbus_interface='org.freesmartphone.Device.PowerSupply')
+                self.batteryproxy = dbus.Interface(self.bus.get_object('org.freesmartphone.odeviced', '/org/freesmartphone/Device/PowerSupply/battery'), dbus_interface='org.freesmartphone.Device.PowerSupply')
                 self.proxies = True
                 return True
             except:
