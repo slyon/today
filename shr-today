@@ -246,7 +246,7 @@ class MainWindow:
             cap = self.batteryproxy.GetCapacity()
             self.batteryLabel.label_set("Battery: "+str(cap)+"%")
             currentProfile = self.profileproxy.GetProfile()
-            self.profileLabel.label_set(" "+currentProfile.capitalize())
+            self.profileLabel.label_set(", "+currentProfile.capitalize())
 
     def destroy(obj, event, *args, **kargs):
         """Closes the application"""
