@@ -61,12 +61,18 @@ class MainWindow:
         gsmBox = elementary.Box(self.win)
         gsmBox.size_hint_weight_set(0.5, 0.5)
         gsmBox.size_hint_align_set(0.0, 0.0)
+        gsmBox.horizontal_set(True)
         panelBox.pack_end(gsmBox)
         gsmBox.show()
         self.gsmLabel = elementary.Label(self.win)
         self.gsmLabel.label_set("")
         gsmBox.pack_end(self.gsmLabel)
         self.gsmLabel.show()
+
+        self.profileLabel = elementary.Label(self.win)
+        self.profileLabel.label_set("")
+        gsmBox.pack_end(self.profileLabel)
+        self.profileLabel.show()
 
         batteryBox = elementary.Box(self.win)
         batteryBox.size_hint_weight_set(0.5, 0.5)
@@ -140,6 +146,7 @@ class MainWindow:
                 self.proxy = dbus.Interface(self.bus.get_object('org.freesmartphone.odeviced', '/org/freesmartphone/Device/Display/0'), dbus_interface='org.freesmartphone.Device.Display')
                 self.contactsproxy = dbus.Interface(self.bus.get_object('org.freesmartphone.opimd', '/org/freesmartphone/PIM/Contacts'), dbus_interface='org.freesmartphone.PIM.Contacts')
                 self.batteryproxy = dbus.Interface(self.bus.get_object('org.freesmartphone.odeviced', '/org/freesmartphone/Device/PowerSupply/battery'), dbus_interface='org.freesmartphone.Device.PowerSupply')
+                self.profileproxy = dbus.Interface(self.bus.get_object('org.freesmartphone.opreferencesd', '/org/freesmartphone/Preferences'), dbus_interface='org.freesmartphone.Preferences')
                 self.proxies = True
                 return True
             except:
@@ -238,6 +245,8 @@ class MainWindow:
         if self.make_proxies():
             cap = self.batteryproxy.GetCapacity()
             self.batteryLabel.label_set("Battery: "+str(cap)+"%")
+            currentProfile = self.profileproxy.GetProfile()
+            self.profileLabel.label_set(" "+currentProfile.capitalize())
 
     def destroy(obj, event, *args, **kargs):
         """Closes the application"""
