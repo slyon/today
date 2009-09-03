@@ -111,6 +111,12 @@ class MainWindow:
         subBox.pack_end(self.profileLabel)
         self.profileLabel.show()
 
+        self.alarmLabel = elementary.Label(self.win)
+        self.alarmLabel.label_set("")
+        self.profileLabel.scale_set(1.0)
+        subBox.pack_end(self.alarmLabel)
+        self.alarmLabel.show()
+
         self.IncomingCallLabel = elementary.Label(self.win)
         self.IncomingCallLabel.label_set("")
         self.IncomingCallLabel.scale_set(1.75)
@@ -156,6 +162,7 @@ class MainWindow:
                 self.profileproxy = dbus.Interface(self.bus.get_object('org.freesmartphone.opreferencesd', '/org/freesmartphone/Preferences'), dbus_interface='org.freesmartphone.Preferences')
                 self.gsmproxy = dbus.Interface(self.bus.get_object('org.freesmartphone.ogsmd', '/org/freesmartphone/GSM/Device'), dbus_interface='org.freesmartphone.GSM.Network')
                 self.simproxy = dbus.Interface(self.bus.get_object('org.freesmartphone.ogsmd', '/org/freesmartphone/GSM/Device'), dbus_interface='org.freesmartphone.GSM.SIM')
+                self.alarmproxy = dbus.Interface(self.bus.get_object('org.freesmartphone.odeviced', '/org/freesmartphone/Device/RealTimeClock/rtc0'), dbus_interface='org.freesmartphone.Device.RealTimeClock')
                 self.batteryStatus(self.batteryproxy.GetCapacity())
                 self.profileChanged(self.profileproxy.GetProfile())
                 self.gsmStatus(self.gsmproxy.GetStatus())
@@ -269,6 +276,12 @@ class MainWindow:
         t = time.localtime()
         self.timeLabel.label_set(time.strftime(self.config.get("format", "time"), t))
         self.dateLabel.label_set(time.strftime(self.config.get("format", "date"), t))
+        rtcWakeupTime = self.alarmproxy.GetWakeupTime()
+        if rtcWakeupTime > time.mktime(t):
+            wakeupTime = time.localtime(float(rtcWakeupTime))
+            self.alarmLabel.label_set("Next alarm: "+time.strftime(self.config.get("format", "date")+" "+self.config.get("format", "time"), wakeupTime))
+        else:
+            self.alarmLabel.label_set("")
         ecore.timer_add(10, self.updateScreen)
 
     def destroy(self, obj, event, *args, **kargs):
