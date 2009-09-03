@@ -34,7 +34,9 @@ class MainWindow:
         self.bus.add_signal_receiver(self.NewMissedCalls, dbus_interface="org.freesmartphone.PIM.Calls", signal_name="NewMissedCalls")
         self.bus.add_signal_receiver(self.UnreadMessages, dbus_interface="org.freesmartphone.PIM.Messages", signal_name="UnreadMessages")
         self.bus.add_signal_receiver(self.gsmStatus, dbus_interface="org.freesmartphone.GSM.Network", signal_name="Status")
-        self.make_proxies()
+#        self.bus.add_signal_receiver(self.signalStatus, dbus_interface="org.freesmartphone.GSM.Network", signal_name="SignalStrength")
+        self.bus.add_signal_receiver(self.profileChanged, dbus_interface="org.freesmartphone.Preferences", signal_name="Notify")
+        self.bus.add_signal_receiver(self.batteryStatus, dbus_interface="org.freesmartphone.Device.PowerSupply", signal_name="Capacity")
 
         self.win = elementary.Window("shr-today", elementary.ELM_WIN_BASIC)
         self.win.title_set("Today")
@@ -69,11 +71,6 @@ class MainWindow:
         leftBox.pack_end(self.gsmLabel)
         self.gsmLabel.show()
 
-        self.profileLabel = elementary.Label(self.win)
-        self.profileLabel.label_set("")
-        leftBox.pack_end(self.profileLabel)
-        self.profileLabel.show()
-
         rightBox = elementary.Box(self.win)
         rightBox.size_hint_weight_set(0.5, 0.5)
         rightBox.size_hint_align_set(1.0, 0.0)
@@ -90,7 +87,7 @@ class MainWindow:
 
         self.timeLabel = elementary.Label(self.win)
         self.timeLabel.label_set("")
-        self.timeLabel.scale_set(5.0)
+        self.timeLabel.scale_set(5.5)
         timebox.pack_end(self.timeLabel)
         self.timeLabel.show()
 
@@ -107,6 +104,12 @@ class MainWindow:
         self.win.resize_object_add(subBox)
         mainbox.pack_end(subBox)
         subBox.show()
+
+        self.profileLabel = elementary.Label(self.win)
+        self.profileLabel.label_set("")
+        self.profileLabel.scale_set(1.0)
+        subBox.pack_end(self.profileLabel)
+        self.profileLabel.show()
 
         self.IncomingCallLabel = elementary.Label(self.win)
         self.IncomingCallLabel.label_set("")
@@ -139,14 +142,24 @@ class MainWindow:
         mainbox.pack_end(toggleframe)
         self.toggle.show()
 
+        self.make_proxies()
+
     ### functions ###
     def make_proxies(self):
         if not self.proxies:
             try:
                 self.proxy = dbus.Interface(self.bus.get_object('org.freesmartphone.odeviced', '/org/freesmartphone/Device/Display/0'), dbus_interface='org.freesmartphone.Device.Display')
                 self.contactsproxy = dbus.Interface(self.bus.get_object('org.freesmartphone.opimd', '/org/freesmartphone/PIM/Contacts'), dbus_interface='org.freesmartphone.PIM.Contacts')
+                self.messagesproxy = dbus.Interface(self.bus.get_object('org.freesmartphone.opimd', '/org/freesmartphone/PIM/Messages'), dbus_interface='org.freesmartphone.PIM.Messages')
+                self.callsproxy = dbus.Interface(self.bus.get_object('org.freesmartphone.opimd', '/org/freesmartphone/PIM/Calls'), dbus_interface='org.freesmartphone.PIM.Calls')
                 self.batteryproxy = dbus.Interface(self.bus.get_object('org.freesmartphone.odeviced', '/org/freesmartphone/Device/PowerSupply/battery'), dbus_interface='org.freesmartphone.Device.PowerSupply')
                 self.profileproxy = dbus.Interface(self.bus.get_object('org.freesmartphone.opreferencesd', '/org/freesmartphone/Preferences'), dbus_interface='org.freesmartphone.Preferences')
+                self.gsmproxy = dbus.Interface(self.bus.get_object('org.freesmartphone.ogsmd', '/org/freesmartphone/GSM/Device'), dbus_interface='org.freesmartphone.GSM.Network')
+                self.batteryStatus(self.batteryproxy.GetCapacity())
+                self.profileChanged(self.profileproxy.GetProfile())
+                self.gsmStatus(self.gsmproxy.GetStatus())
+                self.NewMissedCalls(self.callsproxy.GetNewMissedCalls())
+                self.UnreadMessages(self.messagesproxy.GetUnreadMessages())
                 self.proxies = True
                 return True
             except:
@@ -184,18 +197,21 @@ class MainWindow:
         if name == "lock":
             self.lockScreen()
 
+    def batteryStatus(self, capacity):
+        self.batteryLabel.label_set("Battery: "+str(capacity)+"%")
+
     def gsmStatus(self, args):
         """Updates GSM-Info on change"""
         if args['provider'] == " ":
             gsmProvider = "GSM"
         else:
             gsmProvider = args['provider']
-        self.gsmLabel.label_set(gsmProvider+": "+str(args['strength'])+"%")
+        self.gsmLabel.label_set(elementary.Entry.utf8_to_markup(gsmProvider)+": "+str(args['strength'])+"%")
 
     def IncomingCall(self, *args):
         """Updates screen on incoming call"""
         if args[1] == "incoming":
-            self.IncomingCallLabel.label_set(self.resolve_number(args[2]['peer'])+" is calling")
+            self.IncomingCallLabel.label_set(elementary.Entry.utf8_to_markup(self.resolve_number(args[2]['peer']))+" is calling")
         elif args[1] == "active":
             self.IncomingCallLabel.label_set("active call")
         elif args[1] == "release":
@@ -236,21 +252,23 @@ class MainWindow:
         self.locked = False
         self.win.hide()
 
+    def profileChanged(self, currentProfile):
+        if currentProfile == 'default':
+            currentProfile = ''
+        if currentProfile:
+            currentProfile = elementary.Entry.utf8_to_markup(currentProfile.capitalize())
+        self.profileLabel.label_set(currentProfile)
+
     def updateScreen(self):
         """Updates the time and date labels on the screen every 10 seconds"""
         t = time.localtime()
         self.timeLabel.label_set(time.strftime(self.config.get("format", "time"), t))
         self.dateLabel.label_set(time.strftime(self.config.get("format", "date"), t))
         ecore.timer_add(10, self.updateScreen)
-        if self.make_proxies():
-            cap = self.batteryproxy.GetCapacity()
-            self.batteryLabel.label_set("Battery: "+str(cap)+"%")
-            currentProfile = self.profileproxy.GetProfile()
-            self.profileLabel.label_set(", "+currentProfile.capitalize())
 
-    def destroy(obj, event, *args, **kargs):
-        """Closes the application"""
-        elementary.exit()
+    def destroy(self, obj, event, *args, **kargs):
+        """Called when closing window"""
+        self.unlockScreen()
 
 if __name__ == "__main__":
     elementary.init()
