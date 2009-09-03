@@ -276,12 +276,13 @@ class MainWindow:
         t = time.localtime()
         self.timeLabel.label_set(time.strftime(self.config.get("format", "time"), t))
         self.dateLabel.label_set(time.strftime(self.config.get("format", "date"), t))
-        rtcWakeupTime = self.alarmproxy.GetWakeupTime()
-        if rtcWakeupTime > time.mktime(t):
-            wakeupTime = time.localtime(float(rtcWakeupTime))
-            self.alarmLabel.label_set("Next alarm: "+time.strftime(self.config.get("format", "date")+" "+self.config.get("format", "time"), wakeupTime))
-        else:
-            self.alarmLabel.label_set("")
+        if self.config.get("general", "show_alarm") == "True":
+            rtcWakeupTime = self.alarmproxy.GetWakeupTime()
+            if rtcWakeupTime > time.mktime(t):
+                wakeupTime = time.localtime(float(rtcWakeupTime))
+                self.alarmLabel.label_set("Next alarm: "+time.strftime(self.config.get("format", "date")+" "+self.config.get("format", "time"), wakeupTime))
+            else:
+                self.alarmLabel.label_set("")
         ecore.timer_add(10, self.updateScreen)
 
     def destroy(self, obj, event, *args, **kargs):
