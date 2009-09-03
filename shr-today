@@ -155,9 +155,10 @@ class MainWindow:
                 self.batteryproxy = dbus.Interface(self.bus.get_object('org.freesmartphone.odeviced', '/org/freesmartphone/Device/PowerSupply/battery'), dbus_interface='org.freesmartphone.Device.PowerSupply')
                 self.profileproxy = dbus.Interface(self.bus.get_object('org.freesmartphone.opreferencesd', '/org/freesmartphone/Preferences'), dbus_interface='org.freesmartphone.Preferences')
                 self.gsmproxy = dbus.Interface(self.bus.get_object('org.freesmartphone.ogsmd', '/org/freesmartphone/GSM/Device'), dbus_interface='org.freesmartphone.GSM.Network')
+                self.simproxy = dbus.Interface(self.bus.get_object('org.freesmartphone.ogsmd', '/org/freesmartphone/GSM/Device'), dbus_interface='org.freesmartphone.GSM.SIM')
                 self.batteryStatus(self.batteryproxy.GetCapacity())
                 self.profileChanged(self.profileproxy.GetProfile())
-                self.gsmStatus(self.gsmproxy.GetStatus())
+                self.gsmStatus(self.gsmproxy.GetStatus(),self.simproxy.GetIssuer())
                 self.NewMissedCalls(self.callsproxy.GetNewMissedCalls())
                 self.UnreadMessages(self.messagesproxy.GetUnreadMessages())
                 self.proxies = True
@@ -200,13 +201,16 @@ class MainWindow:
     def batteryStatus(self, capacity):
         self.batteryLabel.label_set("Battery: "+str(capacity)+"%")
 
-    def gsmStatus(self, args):
+    def gsmStatus(self, gsmStatus, simIssuer):
         """Updates GSM-Info on change"""
-        if args['provider'] == " ":
-            gsmProvider = "GSM"
+        if gsmStatus['registration'] == "home":
+            gsmProvider = simIssuer
         else:
-            gsmProvider = args['provider']
-        self.gsmLabel.label_set(elementary.Entry.utf8_to_markup(gsmProvider)+": "+str(args['strength'])+"%")
+            if gsmStatus['provider'] == " ":
+                gsmProvider = "GSM"
+            else:
+                gsmProvider = gsmStatus['provider']
+        self.gsmLabel.label_set(elementary.Entry.utf8_to_markup(gsmProvider)+": "+str(gsmStatus['strength'])+"%")
 
     def IncomingCall(self, *args):
         """Updates screen on incoming call"""
