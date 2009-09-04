@@ -287,7 +287,10 @@ class MainWindow:
 
     def destroy(self, obj, event, *args, **kargs):
         """Called when closing window"""
-        self.unlockScreen()
+        if self.config.get("general", "unlock_by_close") == "True":
+            self.unlockScreen()
+        else:
+            pass
 
 if __name__ == "__main__":
     elementary.init()
