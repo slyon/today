@@ -13,6 +13,7 @@ Simple screen-locking app using opimd.
 import elementary, ecore
 import dbus, e_dbus
 import time
+from functools import partial
 import ConfigParser
 
 class MainWindow:
@@ -22,6 +23,9 @@ class MainWindow:
         self.SMOOTH_SUSPEND = self.config.get("general", "smooth_suspend")
         self.AUX_LOCK = self.config.get("general", "aux_lock")
         self.BACKGROUND = self.config.get("background", "image")
+        self.PROVIDER = self.config.get("gsm", "display_provider")
+        self.ALPHA_GSM = self.config.get("gsm", "transparent_signal_meter")
+        self.BLACK_GSM = self.config.get("gsm", "black_signal_meter")
         self.locked = False
         self.proxies = False
 
@@ -34,9 +38,10 @@ class MainWindow:
         self.bus.add_signal_receiver(self.NewMissedCalls, dbus_interface="org.freesmartphone.PIM.Calls", signal_name="NewMissedCalls")
         self.bus.add_signal_receiver(self.UnreadMessages, dbus_interface="org.freesmartphone.PIM.Messages", signal_name="UnreadMessages")
         self.bus.add_signal_receiver(self.gsmStatus, dbus_interface="org.freesmartphone.GSM.Network", signal_name="Status")
-#        self.bus.add_signal_receiver(self.signalStatus, dbus_interface="org.freesmartphone.GSM.Network", signal_name="SignalStrength")
+        self.bus.add_signal_receiver(self.signalStatus, dbus_interface="org.freesmartphone.GSM.Network", signal_name="SignalStrength")
         self.bus.add_signal_receiver(self.profileChanged, dbus_interface="org.freesmartphone.Preferences", signal_name="Notify")
         self.bus.add_signal_receiver(self.batteryStatus, dbus_interface="org.freesmartphone.Device.PowerSupply", signal_name="Capacity")
+        self.bus.add_signal_receiver(self.resourceStatus, dbus_interface="org.freesmartphone.Usage", signal_name="ResourceChanged")
 
         self.win = elementary.Window("shr-today", elementary.ELM_WIN_BASIC)
         self.win.title_set("Today")
@@ -44,7 +49,8 @@ class MainWindow:
 
         bg = elementary.Background(self.win)
         self.win.resize_object_add(bg)
-        bg.file_set(self.BACKGROUND)
+        if self.BACKGROUND:
+            bg.file_set(self.BACKGROUND)
         bg.size_hint_weight_set(1.0, 1.0)
         bg.show()
 
@@ -66,10 +72,21 @@ class MainWindow:
         leftBox.horizontal_set(True)
         panelBox.pack_end(leftBox)
         leftBox.show()
+        self.signalIcon = elementary.Icon(self.win)
+        self.signalIcon.file_set('/usr/share/shr-today/gsm_no.png')
+        self.signalIcon.scale_set(1, 0)
+        elementary.Photo.scale_set(self.signalIcon, 0.8)
+#        self.signalIcon.size_hint_min_set(48, 24)
+#        self.signalIcon.size_hint_max_set(48, 24)
+#        self.signalIcon.size_hint_weight_set(1.0, 0.0)
+#        self.signalIcon.size_hint_align_set(0.0, 0.0)
+        self.signalIcon.show()
+        leftBox.pack_end(self.signalIcon)
         self.gsmLabel = elementary.Label(self.win)
-        self.gsmLabel.label_set("")
+        self.gsmLabel.label_set(" ")
         leftBox.pack_end(self.gsmLabel)
-        self.gsmLabel.show()
+        if self.PROVIDER == "True":
+            self.gsmLabel.show()
 
         rightBox = elementary.Box(self.win)
         rightBox.size_hint_weight_set(0.5, 0.5)
@@ -101,7 +118,7 @@ class MainWindow:
 
         subBox = elementary.Box(self.win)
         subBox.size_hint_weight_set(1.0, 0.1)
-        self.win.resize_object_add(subBox)
+#        self.win.resize_object_add(subBox)
         mainbox.pack_end(subBox)
         subBox.show()
 
@@ -163,11 +180,10 @@ class MainWindow:
                 self.gsmproxy = dbus.Interface(self.bus.get_object('org.freesmartphone.ogsmd', '/org/freesmartphone/GSM/Device'), dbus_interface='org.freesmartphone.GSM.Network')
                 self.simproxy = dbus.Interface(self.bus.get_object('org.freesmartphone.ogsmd', '/org/freesmartphone/GSM/Device'), dbus_interface='org.freesmartphone.GSM.SIM')
                 self.alarmproxy = dbus.Interface(self.bus.get_object('org.freesmartphone.odeviced', '/org/freesmartphone/Device/RealTimeClock/rtc0'), dbus_interface='org.freesmartphone.Device.RealTimeClock')
-                self.batteryStatus(self.batteryproxy.GetCapacity())
-                self.profileChanged(self.profileproxy.GetProfile())
-                self.gsmStatus(self.gsmproxy.GetStatus())
                 self.NewMissedCalls(self.callsproxy.GetNewMissedCalls())
                 self.UnreadMessages(self.messagesproxy.GetUnreadMessages())
+                self.batteryStatus(self.batteryproxy.GetCapacity())
+                self.gsmStatus(self.gsmproxy.GetStatus())
                 self.proxies = True
                 return True
             except:
@@ -208,17 +224,58 @@ class MainWindow:
     def batteryStatus(self, capacity):
         self.batteryLabel.label_set("Battery: "+str(capacity)+"%")
 
+    def signalStatus(self, strength):
+        if strength > 0 and strength <= 20:
+            icon='0'
+        elif strength>20 and strength <= 40:
+            icon='1'
+        elif strength>40 and strength <= 60:
+            icon='2'
+        elif strength>60 and strength <= 80:
+            icon='3'
+        elif strength>80:
+            icon='4'
+        else:
+            icon='no'
+        self.signalIcon.file_set('/usr/share/shr-today/gsm_'+icon+'.png')
+        if divmod(strength, 20)[1]==0:
+            alpha = 0
+        alpha = 80 - divmod(strength, 20)[1]*4
+        if self.BLACK_GSM=='True':
+            color = 0
+        else:
+            color = 255
+        if self.ALPHA_GSM=='True':
+            alpha = 255-alpha
+        else:
+            alpha = 255
+        self.signalIcon.color_set(color, color, color, alpha)
+
+    def resourceStatus(self, resource, state, *args, **kargs):
+        if resource=='GSM':
+            if not state:
+                self.gsmProvider(None)
+                self.signalStatus(-1)
+        # TODO: Bluetooth, GPS, WiFi, etc.
+
+    def gsmProvider(self, provider, *args, **kargs):
+        if provider:
+            self.gsmLabel.label_set(' '+elementary.Entry.utf8_to_markup(provider))
+        else:
+            self.gsmLabel.label_set(' ')
+
     def gsmStatus(self, gsmStatus):
         """Updates GSM-Info on change"""
-        if gsmStatus['registration'] == "home":
-            simIssuer = self.simproxy.GetIssuer()
-            gsmProvider = simIssuer
-        else:
-            if gsmStatus['provider'] == " ":
-                gsmProvider = "GSM"
+        self.signalStatus(gsmStatus['strength'])
+        if gsmStatus.get('registration') == "home":
+            self.simproxy.GetIssuer(reply_handler=self.gsmProvider, error_handler=partial(self.gsmProvider, gsmStatus.get('provider')))
+            return True
+        if not gsmProvider:
+            if not gsmStatus.get('provider') or gsmStatus.get('provider') == " ":
+                gsmProvider = ''
             else:
                 gsmProvider = gsmStatus['provider']
-        self.gsmLabel.label_set(elementary.Entry.utf8_to_markup(gsmProvider)+": "+str(gsmStatus['strength'])+"%")
+        self.gsmLabel.label_set(' '+elementary.Entry.utf8_to_markup(gsmProvider))
 
     def IncomingCall(self, *args):
         """Updates screen on incoming call"""
@@ -298,3 +355,6 @@ if __name__ == "__main__":
     win.updateScreen()
     elementary.run()
     elementary.shutdown()
+
+
+

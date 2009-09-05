@@ -1,6 +1,8 @@
 * use default background from illume edj, leave picture as option
-* use illume widgets for GSM/GPRS/BAT/GPS/WIFI/BLUETOOTH
+* use fancy edj stuff for gsm signal status (and adjust graphics)
+* use illume widgets for GSM/GPRS/BAT/GPS/WIFI/BLUETOOTH (is it really good idea?)
 * upcoming dates
 * location
   -> weather
 * ask for a password on unlock (low priority)
+* fix RTC API change

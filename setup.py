@@ -20,7 +20,7 @@ dist = setup( name='shr-today',
     license='GNU GPL',
     scripts=['shr-today'],
     data_files=[('/etc', ['data/shr-today.conf']),
-        ('/usr/share/shr-today', ['data/wallpaper.png']),
+        ('/usr/share/shr-today', glob('data/*.png')),
         ('/etc/X11/Xsession.d/', ['data/89shr-today'])]
 )
 
