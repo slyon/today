@@ -179,7 +179,7 @@ class MainWindow:
                 self.profileproxy = dbus.Interface(self.bus.get_object('org.freesmartphone.opreferencesd', '/org/freesmartphone/Preferences'), dbus_interface='org.freesmartphone.Preferences')
                 self.gsmproxy = dbus.Interface(self.bus.get_object('org.freesmartphone.ogsmd', '/org/freesmartphone/GSM/Device'), dbus_interface='org.freesmartphone.GSM.Network')
                 self.simproxy = dbus.Interface(self.bus.get_object('org.freesmartphone.ogsmd', '/org/freesmartphone/GSM/Device'), dbus_interface='org.freesmartphone.GSM.SIM')
-                self.alarmproxy = dbus.Interface(self.bus.get_object('org.freesmartphone.odeviced', '/org/freesmartphone/Device/RealTimeClock/rtc0'), dbus_interface='org.freesmartphone.Device.RealTimeClock')
+                self.alarmproxy = dbus.Interface(self.bus.get_object('org.freesmartphone.odeviced', '/org/freesmartphone/Device/RTC/0'), dbus_interface='org.freesmartphone.Device.RealtimeClock')
                 self.NewMissedCalls(self.callsproxy.GetNewMissedCalls())
                 self.UnreadMessages(self.messagesproxy.GetUnreadMessages())
                 self.batteryStatus(self.batteryproxy.GetCapacity())
