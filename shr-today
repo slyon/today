@@ -24,6 +24,7 @@ class MainWindow:
         self.AUX_LOCK = self.config.get("general", "aux_lock")
         self.BACKGROUND = self.config.get("background", "image")
         self.PROVIDER = self.config.get("gsm", "display_provider")
+        self.SIM_ISSUER = self.config.get("gsm", "display_sim_issuer")
         self.ALPHA_GSM = self.config.get("gsm", "transparent_signal_meter")
         self.BLACK_GSM = self.config.get("gsm", "black_signal_meter")
         self.locked = False
@@ -267,14 +268,14 @@ class MainWindow:
     def gsmStatus(self, gsmStatus):
         """Updates GSM-Info on change"""
         self.signalStatus(gsmStatus['strength'])
-        if gsmStatus.get('registration') == "home":
-            self.simproxy.GetIssuer(reply_handler=self.gsmProvider, error_handler=partial(self.gsmProvider, gsmStatus.get('provider')))
-            return True
-        if not gsmProvider:
-            if not gsmStatus.get('provider') or gsmStatus.get('provider') == " ":
-                gsmProvider = ''
-            else:
-                gsmProvider = gsmStatus['provider']
+        if self.SIM_ISSUER == "True":
+            if gsmStatus.get('registration') == "home":
+                self.simproxy.GetIssuer(reply_handler=self.gsmProvider, error_handler=partial(self.gsmProvider, gsmStatus.get('provider')))
+                return True
+        if not gsmStatus.get('provider') or gsmStatus.get('provider') == " ":
+            gsmProvider = ''
+        else:
+            gsmProvider = gsmStatus['provider']
         self.gsmLabel.label_set(' '+elementary.Entry.utf8_to_markup(gsmProvider))
 
     def IncomingCall(self, *args):
