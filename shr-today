@@ -16,6 +16,9 @@ import time
 from functools import partial
 import ConfigParser
 
+def dbus_err(x):
+  print str(x)
+
 class MainWindow:
     def __init__(self):
         self.config = ConfigParser.ConfigParser()
@@ -37,6 +40,7 @@ class MainWindow:
         self.bus.add_signal_receiver(self.dbus_idle_handler, dbus_interface="org.freesmartphone.Device.IdleNotifier", signal_name="State")
         self.bus.add_signal_receiver(self.IncomingCall, dbus_interface="org.freesmartphone.GSM.Call", signal_name="CallStatus")
         self.bus.add_signal_receiver(self.NewMissedCalls, dbus_interface="org.freesmartphone.PIM.Calls", signal_name="NewMissedCalls")
+        self.bus.add_signal_receiver(self.UnfinishedTasks, dbus_interface="org.freesmartphone.PIM.Tasks", signal_name="UnfinishedTasks")
         self.bus.add_signal_receiver(self.UnreadMessages, dbus_interface="org.freesmartphone.PIM.Messages", signal_name="UnreadMessages")
         self.bus.add_signal_receiver(self.gsmStatus, dbus_interface="org.freesmartphone.GSM.Network", signal_name="Status")
         self.bus.add_signal_receiver(self.signalStatus, dbus_interface="org.freesmartphone.GSM.Network", signal_name="SignalStrength")
@@ -77,10 +81,6 @@ class MainWindow:
         self.signalIcon.file_set('/usr/share/shr-today/gsm_no.png')
         self.signalIcon.scale_set(1, 0)
         elementary.Photo.scale_set(self.signalIcon, 0.8)
-#        self.signalIcon.size_hint_min_set(48, 24)
-#        self.signalIcon.size_hint_max_set(48, 24)
-#        self.signalIcon.size_hint_weight_set(1.0, 0.0)
-#        self.signalIcon.size_hint_align_set(0.0, 0.0)
         self.signalIcon.show()
         leftBox.pack_end(self.signalIcon)
         self.gsmLabel = elementary.Label(self.win)
@@ -119,7 +119,6 @@ class MainWindow:
 
         subBox = elementary.Box(self.win)
         subBox.size_hint_weight_set(1.0, 0.1)
-#        self.win.resize_object_add(subBox)
         mainbox.pack_end(subBox)
         subBox.show()
 
@@ -131,7 +130,7 @@ class MainWindow:
 
         self.alarmLabel = elementary.Label(self.win)
         self.alarmLabel.label_set("")
-        self.profileLabel.scale_set(1.0)
+        self.alarmLabel.scale_set(1.0)
         subBox.pack_end(self.alarmLabel)
         self.alarmLabel.show()
 
@@ -153,6 +152,12 @@ class MainWindow:
         subBox.pack_end(self.messagesLabel);
         self.messagesLabel.show()
 
+        self.tasksLabel = elementary.Label(self.win)
+        self.tasksLabel.label_set("")
+        self.tasksLabel.scale_set(1.75)
+        subBox.pack_end(self.tasksLabel);
+        self.tasksLabel.show()
+
         toggleframe = elementary.Frame(self.win)
         toggleframe.style_set('pad_medium')
         self.toggle = elementary.Toggle(self.win)
@@ -166,7 +171,10 @@ class MainWindow:
         mainbox.pack_end(toggleframe)
         self.toggle.show()
 
-        self.make_proxies()
+        self.updateScreen()
+        ecore.timer_add(10, self.updateScreen)
+        self.updateAlarm()
+        ecore.timer_add(60, self.updateAlarm)
 
     ### functions ###
     def make_proxies(self):
@@ -176,13 +184,16 @@ class MainWindow:
                 self.contactsproxy = dbus.Interface(self.bus.get_object('org.freesmartphone.opimd', '/org/freesmartphone/PIM/Contacts'), dbus_interface='org.freesmartphone.PIM.Contacts')
                 self.messagesproxy = dbus.Interface(self.bus.get_object('org.freesmartphone.opimd', '/org/freesmartphone/PIM/Messages'), dbus_interface='org.freesmartphone.PIM.Messages')
                 self.callsproxy = dbus.Interface(self.bus.get_object('org.freesmartphone.opimd', '/org/freesmartphone/PIM/Calls'), dbus_interface='org.freesmartphone.PIM.Calls')
+                self.tasksproxy = dbus.Interface(self.bus.get_object('org.freesmartphone.opimd', '/org/freesmartphone/PIM/Tasks'), dbus_interface='org.freesmartphone.PIM.Tasks')
                 self.batteryproxy = dbus.Interface(self.bus.get_object('org.freesmartphone.odeviced', '/org/freesmartphone/Device/PowerSupply/battery'), dbus_interface='org.freesmartphone.Device.PowerSupply')
                 self.profileproxy = dbus.Interface(self.bus.get_object('org.freesmartphone.opreferencesd', '/org/freesmartphone/Preferences'), dbus_interface='org.freesmartphone.Preferences')
                 self.gsmproxy = dbus.Interface(self.bus.get_object('org.freesmartphone.ogsmd', '/org/freesmartphone/GSM/Device'), dbus_interface='org.freesmartphone.GSM.Network')
                 self.simproxy = dbus.Interface(self.bus.get_object('org.freesmartphone.ogsmd', '/org/freesmartphone/GSM/Device'), dbus_interface='org.freesmartphone.GSM.SIM')
                 self.alarmproxy = dbus.Interface(self.bus.get_object('org.freesmartphone.odeviced', '/org/freesmartphone/Device/RTC/0'), dbus_interface='org.freesmartphone.Device.RealtimeClock')
+                self.profileChanged(self.profileproxy.GetProfile())
                 self.NewMissedCalls(self.callsproxy.GetNewMissedCalls())
                 self.UnreadMessages(self.messagesproxy.GetUnreadMessages())
+                self.UnfinishedTasks(self.tasksproxy.GetUnfinishedTasks())
                 self.batteryStatus(self.batteryproxy.GetCapacity())
                 self.gsmStatus(self.gsmproxy.GetStatus())
                 self.proxies = True
@@ -296,6 +307,15 @@ class MainWindow:
         else:
             self.callsLabel.label_set(str(missedCalls)+" missed calls")
 
+    def UnfinishedTasks(self, unfinishedTasks):
+        """Updates screen on new task"""
+        if unfinishedTasks == 0:
+            self.tasksLabel.label_set("")   
+        elif unfinishedTasks == 1:
+            self.tasksLabel.label_set(str(unfinishedTasks)+" unfinished task")
+        else:
+            self.tasksLabel.label_set(str(unfinishedTasks)+" unfinished tasks")
+
     def UnreadMessages(self, unreadMessages):
         """Updates screen on new unread message"""
         if unreadMessages == 0:
@@ -329,22 +349,24 @@ class MainWindow:
             currentProfile = elementary.Entry.utf8_to_markup(currentProfile.capitalize())
         self.profileLabel.label_set(currentProfile)
 
+    def alarmChanged(self, rtcWakeupTime):
+        if rtcWakeupTime > time.mktime(time.localtime()):
+            wakeupTime = time.localtime(float(rtcWakeupTime))
+            self.alarmLabel.label_set("Next alarm: "+time.strftime(self.config.get("format", "date")+" "+self.config.get("format", "time"), wakeupTime))
+        else:
+            self.alarmLabel.label_set("")
+
+    def updateAlarm(self):
+        if self.config.get("general", "show_alarm") == "True" and self.make_proxies():
+            rtcWakeupTime = self.alarmproxy.GetWakeupTime(reply_handler=self.alarmChanged, error_handler=dbus_err)
+        return True
+
     def updateScreen(self):
         """Updates the time and date labels on the screen every 10 seconds"""
         t = time.localtime()
         self.timeLabel.label_set(time.strftime(self.config.get("format", "time"), t))
         self.dateLabel.label_set(time.strftime(self.config.get("format", "date"), t))
-        if self.config.get("general", "show_alarm") == "True":
-            try:
-                rtcWakeupTime = self.alarmproxy.GetWakeupTime()
-                if rtcWakeupTime > time.mktime(t):
-                    wakeupTime = time.localtime(float(rtcWakeupTime))
-                    self.alarmLabel.label_set("Next alarm: "+time.strftime(self.config.get("format", "date")+" "+self.config.get("format", "time"), wakeupTime))
-                else:
-                    self.alarmLabel.label_set("")
-            except:
-                print "DEBUG: couldn't get wakeuptime from FSO"
-        ecore.timer_add(10, self.updateScreen)
+        return True
 
     def destroy(self, obj, event, *args, **kargs):
         """Called when closing window"""
@@ -356,9 +378,5 @@ class MainWindow:
 if __name__ == "__main__":
     elementary.init()
     win = MainWindow()
-    win.updateScreen()
     elementary.run()
     elementary.shutdown()
-
-
-
