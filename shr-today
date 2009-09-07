@@ -16,9 +16,6 @@ import time
 from functools import partial
 import ConfigParser
 
-def dbus_err(x):
-  print str(x)
-
 class MainWindow:
     def __init__(self):
         self.config = ConfigParser.ConfigParser()
@@ -47,6 +44,8 @@ class MainWindow:
         self.bus.add_signal_receiver(self.profileChanged, dbus_interface="org.freesmartphone.Preferences", signal_name="Notify")
         self.bus.add_signal_receiver(self.batteryStatus, dbus_interface="org.freesmartphone.Device.PowerSupply", signal_name="Capacity")
         self.bus.add_signal_receiver(self.resourceStatus, dbus_interface="org.freesmartphone.Usage", signal_name="ResourceChanged")
+        if self.config.get("general", "show_alarm") == "True":
+            self.bus.add_signal_receiver(self.alarmChanged, dbus_interface="org.freesmartphone.Device.RealtimeClock", signal_name="WakeupTimeChanged")
 
         self.win = elementary.Window("shr-today", elementary.ELM_WIN_BASIC)
         self.win.title_set("Today")
@@ -173,8 +172,7 @@ class MainWindow:
 
         self.updateScreen()
         ecore.timer_add(10, self.updateScreen)
-        self.updateAlarm()
-        ecore.timer_add(60, self.updateAlarm)
+        self.make_proxies()
 
     ### functions ###
     def make_proxies(self):
@@ -196,6 +194,8 @@ class MainWindow:
                 self.UnfinishedTasks(self.tasksproxy.GetUnfinishedTasks())
                 self.batteryStatus(self.batteryproxy.GetCapacity())
                 self.gsmStatus(self.gsmproxy.GetStatus())
+                if self.config.get("general", "show_alarm") == "True":
+                    self.alarmChanged(self.alarmproxy.GetWakeupTime())
                 self.proxies = True
                 return True
             except:
@@ -284,7 +284,7 @@ class MainWindow:
                 self.simproxy.GetIssuer(reply_handler=self.gsmProvider, error_handler=partial(self.gsmProvider, gsmStatus.get('provider')))
                 return True
         if not gsmStatus.get('provider') or gsmStatus.get('provider') == " ":
-            gsmProvider = ''
+            gsmProvider = ' '
         else:
             gsmProvider = gsmStatus['provider']
         self.gsmLabel.label_set(' '+elementary.Entry.utf8_to_markup(gsmProvider))
@@ -355,11 +355,6 @@ class MainWindow:
             self.alarmLabel.label_set("Next alarm: "+time.strftime(self.config.get("format", "date")+" "+self.config.get("format", "time"), wakeupTime))
         else:
             self.alarmLabel.label_set("")
-
-    def updateAlarm(self):
-        if self.config.get("general", "show_alarm") == "True" and self.make_proxies():
-            rtcWakeupTime = self.alarmproxy.GetWakeupTime(reply_handler=self.alarmChanged, error_handler=dbus_err)
-        return True
 
     def updateScreen(self):
         """Updates the time and date labels on the screen every 10 seconds"""
