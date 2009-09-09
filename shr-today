@@ -170,6 +170,7 @@ class MainWindow:
         mainbox.pack_end(toggleframe)
         self.toggle.show()
 
+        self.alarm = 0
         self.updateScreen()
         ecore.timer_add(10, self.updateScreen)
         self.make_proxies()
@@ -350,6 +351,7 @@ class MainWindow:
         self.profileLabel.label_set(currentProfile)
 
     def alarmChanged(self, rtcWakeupTime):
+        self.alarm = rtcWakeupTime
         if rtcWakeupTime > time.mktime(time.localtime()):
             wakeupTime = time.localtime(float(rtcWakeupTime))
             self.alarmLabel.label_set("Next alarm: "+time.strftime(self.config.get("format", "date")+" "+self.config.get("format", "time"), wakeupTime))
@@ -361,6 +363,8 @@ class MainWindow:
         t = time.localtime()
         self.timeLabel.label_set(time.strftime(self.config.get("format", "time"), t))
         self.dateLabel.label_set(time.strftime(self.config.get("format", "date"), t))
+        if self.alarm < time.mktime(t):
+            self.alarmLabel.label_set("")
         return True
 
     def destroy(self, obj, event, *args, **kargs):
