@@ -95,6 +95,25 @@ class MainWindow:
         rightBox.horizontal_set(True)
         panelBox.pack_end(rightBox)
         rightBox.show()
+
+        self.bluetoothIcon = elementary.Icon(self.win)
+        self.bluetoothIcon.file_set('/usr/share/shr-today/bluetooth.png')
+        self.bluetoothIcon.scale_set(1, 0)
+        elementary.Photo.scale_set(self.bluetoothIcon, 0.8)
+        rightBox.pack_end(self.bluetoothIcon)
+
+        self.wifiIcon = elementary.Icon(self.win)
+        self.wifiIcon.file_set('/usr/share/shr-today/wifi.png')
+        self.wifiIcon.scale_set(1, 0)
+        elementary.Photo.scale_set(self.wifiIcon, 0.8)
+        rightBox.pack_end(self.wifiIcon)
+
+        self.gpsIcon = elementary.Icon(self.win)
+        self.gpsIcon.file_set('/usr/share/shr-today/gps.png')
+        self.gpsIcon.scale_set(1, 0)
+        elementary.Photo.scale_set(self.gpsIcon, 0.8)
+        rightBox.pack_end(self.gpsIcon)
+
         self.batteryLabel = elementary.Label(self.win)
         self.batteryLabel.label_set(" ")
         rightBox.pack_end(self.batteryLabel)
@@ -106,6 +125,7 @@ class MainWindow:
         elementary.Photo.scale_set(self.batteryIcon, 0.8)
         self.batteryIcon.show()
         rightBox.pack_end(self.batteryIcon)
+
         #/Panel
 
         timebox = elementary.Box(self.win)
@@ -248,22 +268,21 @@ class MainWindow:
             if not state:
                 self.gsmProvider(None)
                 self.signalStatus(-1)
-        # TODO: Bluetooth, GPS, WiFi, etc.
         elif resource=='Bluetooth':
             if state:
-                pass #show BT icon
+                self.bluetoothIcon.show()
             else:
-                pass #hide BT icon
+                self.bluetoothIcon.hide()
         elif resource=='WiFi':
             if state:
-                pass #show WiFi icon
+                self.wifiIcon.show()
             else:
-                pass #hide WiFi icon
+                self.wifiIcon.hide()
         elif resource=='GPS':
             if state:
-                pass #show GPS icon
+                self.gpsIcon.show()
             else:
-                pass #hide GPS icon
+                self.gpsIcon.hide()
 
     def batteryStatus(self, capacity):
         if capacity > 0 and capacity <= 10:
