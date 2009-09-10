@@ -24,7 +24,7 @@ class MainWindow:
         self.AUX_LOCK = self.config.get("general", "aux_lock")
         self.BACKGROUND = self.config.get("background", "image")
         self.PROVIDER = self.config.get("gsm", "display_provider")
-        self.SIM_ISSUER = self.config.get("gsm", "display_sim_issuer")
+        self.SIM_ISSUER = self.config.get("gsm", "sim_issuer_as_provider")
         self.ALPHA_PANEL = self.config.get("panel", "transparent_widgets")
         self.BLACK_PANEL = self.config.get("panel", "black_widgets")
         self.BAT_CAP = self.config.get("battery", "show_percentage")
