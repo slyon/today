@@ -250,11 +250,20 @@ class MainWindow:
                 self.signalStatus(-1)
         # TODO: Bluetooth, GPS, WiFi, etc.
         elif resource=='Bluetooth':
-            pass
+            if state:
+                pass #show BT icon
+            else:
+                pass #hide BT icon
         elif resource=='WiFi':
-            pass
+            if state:
+                pass #show WiFi icon
+            else:
+                pass #hide WiFi icon
         elif resource=='GPS':
-            pass
+            if state:
+                pass #show GPS icon
+            else:
+                pass #hide GPS icon
 
     def batteryStatus(self, capacity):
         if capacity > 0 and capacity <= 10:
