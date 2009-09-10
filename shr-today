@@ -25,8 +25,9 @@ class MainWindow:
         self.BACKGROUND = self.config.get("background", "image")
         self.PROVIDER = self.config.get("gsm", "display_provider")
         self.SIM_ISSUER = self.config.get("gsm", "display_sim_issuer")
-        self.ALPHA_GSM = self.config.get("gsm", "transparent_signal_meter")
-        self.BLACK_GSM = self.config.get("gsm", "black_signal_meter")
+        self.ALPHA_PANEL = self.config.get("panel", "transparent_widgets")
+        self.BLACK_PANEL = self.config.get("panel", "black_widgets")
+        self.BAT_CAP = self.config.get("battery", "show_percentage")
         self.locked = False
         self.proxies = False
 
@@ -91,12 +92,20 @@ class MainWindow:
         rightBox = elementary.Box(self.win)
         rightBox.size_hint_weight_set(0.5, 0.5)
         rightBox.size_hint_align_set(1.0, 0.0)
+        rightBox.horizontal_set(True)
         panelBox.pack_end(rightBox)
         rightBox.show()
         self.batteryLabel = elementary.Label(self.win)
-        self.batteryLabel.label_set("")
+        self.batteryLabel.label_set(" ")
         rightBox.pack_end(self.batteryLabel)
-        self.batteryLabel.show()
+        if self.BAT_CAP == "True":
+            self.batteryLabel.show()
+        self.batteryIcon = elementary.Icon(self.win)
+        self.batteryIcon.file_set('/usr/share/shr-today/bat_no.png')
+        self.batteryIcon.scale_set(1, 0)
+        elementary.Photo.scale_set(self.batteryIcon, 0.8)
+        self.batteryIcon.show()
+        rightBox.pack_end(self.batteryIcon)
         #/Panel
 
         timebox = elementary.Box(self.win)
@@ -235,7 +244,34 @@ class MainWindow:
             self.lockScreen()
 
     def batteryStatus(self, capacity):
-        self.batteryLabel.label_set("Battery: "+str(capacity)+"%")
+        if capacity > 0 and capacity <= 10:
+            icon='10'
+        elif capacity>10 and capacity <= 20:
+            icon='20'
+        elif capacity>20 and capacity <= 40:
+            icon='40'
+        elif capacity>40 and capacity <= 60:
+            icon='60'
+        elif capacity>60 and capacity <= 80:
+            icon='80'
+        elif strength>80:
+            icon='100'
+        else:
+            icon='no'
+        self.batteryIcon.file_set('/usr/share/shr-today/bat_'+icon+'.png')
+        if divmod(capacity, 20)[1]==0:
+            alpha = 0
+        alpha = 80 - divmod(capacity, 20)[1]*4
+        if self.BLACK_PANEL=='True':
+            color = 0
+        else:
+            color = 255
+        if self.ALPHA_PANEL=='True':
+            alpha = 255-alpha
+        else:
+            alpha = 255
+        self.batteryIcon.color_set(color, color, color, alpha)
+        self.batteryLabel.label_set(str(capacity)+"% ")
 
     def signalStatus(self, strength):
         if strength > 0 and strength <= 20:
@@ -254,11 +290,11 @@ class MainWindow:
         if divmod(strength, 20)[1]==0:
             alpha = 0
         alpha = 80 - divmod(strength, 20)[1]*4
-        if self.BLACK_GSM=='True':
+        if self.BLACK_PANEL=='True':
             color = 0
         else:
             color = 255
-        if self.ALPHA_GSM=='True':
+        if self.ALPHA_PANEL=='True':
             alpha = 255-alpha
         else:
             alpha = 255
