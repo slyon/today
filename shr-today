@@ -243,6 +243,19 @@ class MainWindow:
         if name == "lock":
             self.lockScreen()
 
+    def resourceStatus(self, resource, state, *args, **kargs):
+        if resource=='GSM':
+            if not state:
+                self.gsmProvider(None)
+                self.signalStatus(-1)
+        # TODO: Bluetooth, GPS, WiFi, etc.
+        elif resource=='Bluetooth':
+            pass
+        elif resource=='WiFi':
+            pass
+        elif resource=='GPS':
+            pass
+
     def batteryStatus(self, capacity):
         if capacity > 0 and capacity <= 10:
             icon='10'
@@ -299,13 +312,6 @@ class MainWindow:
         else:
             alpha = 255
         self.signalIcon.color_set(color, color, color, alpha)
-
-    def resourceStatus(self, resource, state, *args, **kargs):
-        if resource=='GSM':
-            if not state:
-                self.gsmProvider(None)
-                self.signalStatus(-1)
-        # TODO: Bluetooth, GPS, WiFi, etc.
 
     def gsmProvider(self, provider, *args, **kargs):
         if provider:
