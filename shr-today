@@ -93,6 +93,7 @@ class MainWindow:
         rightBox.size_hint_weight_set(0.5, 0.5)
         rightBox.size_hint_align_set(1.0, 0.0)
         rightBox.horizontal_set(True)
+        rightBox.homogenous_set(True)
         panelBox.pack_end(rightBox)
         rightBox.show()
 
