@@ -296,7 +296,7 @@ class MainWindow:
             icon='60'
         elif capacity>60 and capacity <= 80:
             icon='80'
-        elif strength>80:
+        elif capacity>80:
             icon='100'
         else:
             icon='no'
