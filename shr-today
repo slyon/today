@@ -405,6 +405,7 @@ class MainWindow:
 
     def lockScreen(self):
         """Locks the screen"""
+        self.make_proxies()
         self.locked = True
         self.win.fullscreen_set(True)
         self.win.show()
