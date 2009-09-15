@@ -214,7 +214,7 @@ class MainWindow:
                 self.messagesproxy = dbus.Interface(self.bus.get_object('org.freesmartphone.opimd', '/org/freesmartphone/PIM/Messages'), dbus_interface='org.freesmartphone.PIM.Messages')
                 self.callsproxy = dbus.Interface(self.bus.get_object('org.freesmartphone.opimd', '/org/freesmartphone/PIM/Calls'), dbus_interface='org.freesmartphone.PIM.Calls')
                 self.tasksproxy = dbus.Interface(self.bus.get_object('org.freesmartphone.opimd', '/org/freesmartphone/PIM/Tasks'), dbus_interface='org.freesmartphone.PIM.Tasks')
-                self.batteryproxy = dbus.Interface(self.bus.get_object('org.freesmartphone.odeviced', '/org/freesmartphone/Device/PowerSupply/battery'), dbus_interface='org.freesmartphone.Device.PowerSupply')
+                self.batteryproxy = dbus.Interface(self.bus.get_object('org.freesmartphone.odeviced', '/org/freesmartphone/Device/PowerSupply'), dbus_interface='org.freesmartphone.Device.PowerSupply')
                 self.profileproxy = dbus.Interface(self.bus.get_object('org.freesmartphone.opreferencesd', '/org/freesmartphone/Preferences'), dbus_interface='org.freesmartphone.Preferences')
                 self.gsmproxy = dbus.Interface(self.bus.get_object('org.freesmartphone.ogsmd', '/org/freesmartphone/GSM/Device'), dbus_interface='org.freesmartphone.GSM.Network')
                 self.simproxy = dbus.Interface(self.bus.get_object('org.freesmartphone.ogsmd', '/org/freesmartphone/GSM/Device'), dbus_interface='org.freesmartphone.GSM.SIM')
@@ -223,7 +223,11 @@ class MainWindow:
                 self.NewMissedCalls(self.callsproxy.GetNewMissedCalls())
                 self.UnreadMessages(self.messagesproxy.GetUnreadMessages())
                 self.UnfinishedTasks(self.tasksproxy.GetUnfinishedTasks())
-                self.batteryStatus(self.batteryproxy.GetCapacity())
+                try:
+                    self.batteryStatus(self.batteryproxy.GetCapacity())
+                except:
+                    self.batteryproxy = dbus.Interface(self.bus.get_object('org.freesmartphone.odeviced', '/org/freesmartphone/Device/PowerSupply/battery'), dbus_interface='org.freesmartphone.Device.PowerSupply')
+                    self.batteryStatus(self.batteryproxy.GetCapacity())
                 self.gsmStatus(self.gsmproxy.GetStatus())
                 if self.config.get("general", "show_alarm") == "True":
                     self.alarmChanged(self.alarmproxy.GetWakeupTime())
