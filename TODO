@@ -5,4 +5,5 @@
   -> weather
 * colors
 * ask for a password on unlock (low priority)
-
+* use more polished graphics
+* display state of CPU and Display resources
