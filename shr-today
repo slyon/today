@@ -22,6 +22,7 @@ class MainWindow:
         self.config.read("/etc/shr-today.conf")
         self.SMOOTH_SUSPEND = self.config.get("general", "smooth_suspend")
         self.AUX_LOCK = self.config.get("general", "aux_lock")
+        self.UNLOCK_ON_INCOMING_CALL = self.config.get("general", "unlock_on_incoming_call")
         self.BACKGROUND = self.config.get("background", "image")
         self.PROVIDER = self.config.get("gsm", "display_provider")
         self.SIM_ISSUER = self.config.get("gsm", "sim_issuer_as_provider")
@@ -368,6 +369,8 @@ class MainWindow:
     def IncomingCall(self, *args):
         """Updates screen on incoming call"""
         if args[1] == "incoming":
+            if self.UNLOCK_ON_INCOMING_CALL == "True":
+                self.unlockScreen()
             self.IncomingCallLabel.label_set(elementary.Entry.utf8_to_markup(self.resolve_number(args[2]['peer']))+" is calling")
         elif args[1] == "active":
             self.IncomingCallLabel.label_set("active call")
