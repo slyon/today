@@ -116,6 +116,18 @@ class MainWindow:
         elementary.Photo.scale_set(self.gpsIcon, 0.8)
         rightBox.pack_end(self.gpsIcon)
 
+        self.displayIcon = elementary.Icon(self.win)
+        self.displayIcon.file_set('/usr/share/shr-today/display.png')
+        self.displayIcon.scale_set(1, 0)
+        elementary.Photo.scale_set(self.displayIcon, 0.8)
+        rightBox.pack_end(self.displayIcon)
+
+        self.cpuIcon = elementary.Icon(self.win)
+        self.cpuIcon.file_set('/usr/share/shr-today/cpu.png')
+        self.cpuIcon.scale_set(1, 0)
+        elementary.Photo.scale_set(self.cpuIcon, 0.8)
+        rightBox.pack_end(self.cpuIcon)
+
         self.batteryLabel = elementary.Label(self.win)
         self.batteryLabel.label_set(" ")
         rightBox.pack_end(self.batteryLabel)
@@ -289,6 +301,16 @@ class MainWindow:
                 self.gpsIcon.show()
             else:
                 self.gpsIcon.hide()
+        elif resource=='CPU':
+            if state:
+                self.cpuIcon.show()
+            else:
+                self.cpuIcon.hide()
+        elif resource=='Display':
+            if state:
+                self.displayIcon.show()
+            else:
+                self.displayIcon.hide()
 
     def batteryStatus(self, capacity):
         if capacity > 0 and capacity <= 10:
