@@ -1,5 +1,6 @@
 * use default background from illume edj, leave picture as option
 * use fancy edj stuff for gsm signal status (and adjust graphics)
+* more async in make_proxies
 * upcoming dates
 * location
   -> weather
