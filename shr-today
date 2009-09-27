@@ -241,15 +241,18 @@ class MainWindow:
                 except:
                     self.batteryproxy = dbus.Interface(self.bus.get_object('org.freesmartphone.odeviced', '/org/freesmartphone/Device/PowerSupply/battery'), dbus_interface='org.freesmartphone.Device.PowerSupply')
                     self.batteryStatus(self.batteryproxy.GetCapacity())
-                self.gsmStatus(self.gsmproxy.GetStatus())
                 if self.config.get("general", "show_alarm") == "True":
-                    self.alarmChanged(self.alarmproxy.GetWakeupTime())
+                    self.alarmproxy.GetWakeupTime(reply_handler=self.alarmChanged, error_handler=self.dbus_err)
+                self.gsmStatus(self.gsmproxy.GetStatus())
                 self.proxies = True
                 return True
             except:
                 return False
         else:
             return True
+
+    def dbus_err(self, err):
+        print "dbus error: "+str(err)
 
     def resolve_number(self, number):
         name = ''
