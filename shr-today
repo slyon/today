@@ -55,7 +55,10 @@ class MainWindow:
 
         bg = elementary.Background(self.win)
         self.win.resize_object_add(bg)
-        if self.BACKGROUND:
+        if self.BACKGROUND == "default":
+            #FIXME: get active edj-file
+            bg.file_set("/usr/share/enlightenment/data/themes/illume-shr.edj", "e/desktop/background")
+        elif self.BACKGROUND:
             bg.file_set(self.BACKGROUND)
         bg.size_hint_weight_set(1.0, 1.0)
         bg.show()
