@@ -7,3 +7,4 @@
 * colors
 * ask for a password on unlock (low priority)
 * use more polished graphics
+* make it fully themeable, by using edje
