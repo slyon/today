@@ -1,3 +1,4 @@
+* swallow background image into edj-file
 * use FSO orientation API, when available
 * optimize the slider theme
 * make a palm pre like theme

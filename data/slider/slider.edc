@@ -647,7 +647,47 @@ NOTIFICATION("incomingCall", "incomingCall.png", "Incoming Call:", "Diana D. is 
 	       }
 	    }
 
+		part {
+			name: "sliderbackground-middle";
+			type: "IMAGE";
+			mouse_events: 0;
+			description {
+				state: "default" 0.0;
+				image.normal: "sliderbackground_middle.png";
+				rel1.to: "slider-bg";
+				rel1.offset: 25 0;
+				rel2.to: "slider-bg";
+				rel2.offset: -25 0;
+				}
+			}
 
+		part {
+			name: "sliderbackground-left";
+			type: "IMAGE";
+			mouse_events: 0;
+			description {
+				state: "default" 0.0;
+				image.normal: "sliderbackground_left.png";
+				rel1.to: "slider-bg";
+				rel2.to: "slider-bg";
+				rel2.relative: 0.0 1.0;
+				rel2.offset: 25 0;
+				}
+			}
+
+		part {
+			name: "sliderbackground-right";
+			type: "IMAGE";
+			mouse_events: 0;
+			description {
+				state: "default" 0.0;
+				image.normal: "sliderbackground_right.png";
+				rel1.to: "slider-bg";
+				rel1.relative: 1.0 0.0;
+				rel1.offset: -25 0;
+				rel2.to: "slider-bg";
+				}
+			}
 
 		part {
 			name: "arrow";

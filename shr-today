@@ -25,7 +25,7 @@ class Main:
         self.SMOOTH_SUSPEND = self.config.get("general", "smooth_suspend")
         self.AUX_LOCK = self.config.get("general", "aux_lock")
         self.UNLOCK_ON_INCOMING_CALL = self.config.get("general", "unlock_on_incoming_call")
-        self.STYLE = self.config.get("style", "style")
+        self.STYLE = self.config.get("style", "theme")
         self.PROVIDER = self.config.get("gsm", "display_provider")
         self.SIM_ISSUER = self.config.get("gsm", "sim_issuer_as_provider")
         self.locked = False
@@ -44,8 +44,7 @@ class Main:
         self.bus.add_signal_receiver(self.profileChanged, dbus_interface="org.freesmartphone.Preferences", signal_name="Notify")
         self.bus.add_signal_receiver(self.batteryStatus, dbus_interface="org.freesmartphone.Device.PowerSupply", signal_name="Capacity")
         self.bus.add_signal_receiver(self.resourceStatus, dbus_interface="org.freesmartphone.Usage", signal_name="ResourceChanged")
-        if self.config.get("general", "show_alarm") == "True":
-            self.bus.add_signal_receiver(self.alarmChanged, dbus_interface="org.freesmartphone.Device.RealtimeClock", signal_name="WakeupTimeChanged")
+        self.bus.add_signal_receiver(self.alarmChanged, dbus_interface="org.freesmartphone.Device.RealtimeClock", signal_name="WakeupTimeChanged")
 
 
         if ecore.evas.engine_type_supported_get("software_16_x11"):
