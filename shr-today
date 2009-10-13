@@ -26,6 +26,7 @@ class Main:
         self.AUX_LOCK = self.config.get("general", "aux_lock")
         self.UNLOCK_ON_INCOMING_CALL = self.config.get("general", "unlock_on_incoming_call")
         self.STYLE = self.config.get("style", "theme")
+        self.WALLPAPER = self.config.get("style", "wallpaper")
         self.PROVIDER = self.config.get("gsm", "display_provider")
         self.SIM_ISSUER = self.config.get("gsm", "sim_issuer_as_provider")
         self.locked = False
@@ -55,7 +56,15 @@ class Main:
 
         self.ee = f(w=480, h=640)
         self.ee.fullscreen = True
+        self.ee.title = "SHR-Today"
         self.c = edje.Edje(self.ee.evas,file=self.STYLE,group="shr-today")
+
+        #Swallow in the wallpaper
+        self.wallpaper = self.c.evas.FilledImage()
+        self.wallpaper.file_set(self.WALLPAPER)
+        self.wallpaper.show()
+        self.c.part_swallow('background',self.wallpaper)
+
         self.c.signal_callback_add("unlockScreen","slider",self.unlockScreen)
         self.c.show()
 

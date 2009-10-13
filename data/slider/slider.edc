@@ -1,6 +1,5 @@
 collections {
    images {
-      image: "wallpaper.png" COMP;
       image: "clock.png" COMP;
       image: "bottom.png" COMP;
       image: "slider.png" COMP;
@@ -39,11 +38,10 @@ collections {
 
 	    part {
 	       name: "background";
-	       type: IMAGE;
+	       type: SWALLOW;
 	       mouse_events: 0;
 	       description {
 	          state: "default" 0.0;
-	          image { normal: "wallpaper.png"; }
 	          rel1 { relative: 0.0 0.0; }
 	          rel2 { relative: 1.0 1.0; }
 	       }
