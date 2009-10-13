@@ -56,7 +56,6 @@ class Main:
         self.ee = f(w=480, h=640)
         self.ee.fullscreen = True
         self.c = edje.Edje(self.ee.evas,file=self.STYLE,group="shr-today")
-        self.c.size = self.ee.evas.size
         self.c.signal_callback_add("unlockScreen","slider",self.unlockScreen)
         self.c.show()
 
@@ -272,6 +271,7 @@ class Main:
         t = time.localtime()
         self.c.part_text_set("time", time.strftime(self.config.get("format", "time"), t))
         self.c.part_text_set("date", time.strftime(self.config.get("format", "date"), t))
+        self.c.size = self.ee.evas.size
         if self.alarm < time.mktime(t):
             self.c.signal_emit("","deactivateAlarm")
         return True
