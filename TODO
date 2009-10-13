@@ -1,10 +1,9 @@
-* use default background from illume edj, leave picture as option
-* use fancy edj stuff for gsm signal status (and adjust graphics)
+* use FSO orientation API, when available
+* optimize the slider theme
+* make a palm pre like theme
 * more async in make_proxies
 * upcoming dates
 * location
   -> weather
-* colors
 * ask for a password on unlock (low priority)
 * use more polished graphics
-* make it fully themeable, by using edje

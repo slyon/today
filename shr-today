@@ -10,33 +10,31 @@ GPLv2 or later
 Simple screen-locking app using opimd.
 """
 
-import elementary, ecore
+#!/usr/bin/env python
+
+import ecore, ecore.evas, edje, elementary
+import sys, os, time
 import dbus, e_dbus
-import time
 from functools import partial
 import ConfigParser
 
-class MainWindow:
+class Main:
     def __init__(self):
         self.config = ConfigParser.ConfigParser()
         self.config.read("/etc/shr-today.conf")
         self.SMOOTH_SUSPEND = self.config.get("general", "smooth_suspend")
         self.AUX_LOCK = self.config.get("general", "aux_lock")
         self.UNLOCK_ON_INCOMING_CALL = self.config.get("general", "unlock_on_incoming_call")
-        self.BACKGROUND = self.config.get("background", "image")
+        self.STYLE = self.config.get("style", "style")
         self.PROVIDER = self.config.get("gsm", "display_provider")
         self.SIM_ISSUER = self.config.get("gsm", "sim_issuer_as_provider")
-        self.ALPHA_PANEL = self.config.get("panel", "transparent_widgets")
-        self.BLACK_PANEL = self.config.get("panel", "black_widgets")
-        self.BAT_CAP = self.config.get("battery", "show_percentage")
         self.locked = False
         self.proxies = False
 
         self.bus = dbus.SystemBus(mainloop = e_dbus.DBusEcoreMainLoop())
-        self.bus.add_signal_receiver(self.dbus_suspend_handler, dbus_interface="org.freesmartphone.Usage", signal_name="SystemAction")
-        if self.AUX_LOCK == "True":
-            self.bus.add_signal_receiver(self.dbus_aux_handler, dbus_interface="org.freesmartphone.Device.Input", signal_name="Event")
-        self.bus.add_signal_receiver(self.dbus_idle_handler, dbus_interface="org.freesmartphone.Device.IdleNotifier", signal_name="State")
+        self.bus.add_signal_receiver(self.suspendHandler, dbus_interface="org.freesmartphone.Usage", signal_name="SystemAction")
+        self.bus.add_signal_receiver(self.auxHandler, dbus_interface="org.freesmartphone.Device.Input", signal_name="Event")
+        self.bus.add_signal_receiver(self.idleHandler, dbus_interface="org.freesmartphone.Device.IdleNotifier", signal_name="State")
         self.bus.add_signal_receiver(self.IncomingCall, dbus_interface="org.freesmartphone.GSM.Call", signal_name="CallStatus")
         self.bus.add_signal_receiver(self.NewMissedCalls, dbus_interface="org.freesmartphone.PIM.Calls", signal_name="NewMissedCalls")
         self.bus.add_signal_receiver(self.UnfinishedTasks, dbus_interface="org.freesmartphone.PIM.Tasks", signal_name="UnfinishedTasks")
@@ -49,172 +47,19 @@ class MainWindow:
         if self.config.get("general", "show_alarm") == "True":
             self.bus.add_signal_receiver(self.alarmChanged, dbus_interface="org.freesmartphone.Device.RealtimeClock", signal_name="WakeupTimeChanged")
 
-        self.win = elementary.Window("shr-today", elementary.ELM_WIN_BASIC)
-        self.win.title_set("Today")
-        self.win.destroy = self.destroy
 
-        bg = elementary.Background(self.win)
-        self.win.resize_object_add(bg)
-        if self.BACKGROUND == "default":
-            #FIXME: get active edj-file
-            bg.file_set("/usr/share/enlightenment/data/themes/illume-shr.edj", "e/desktop/background")
-        elif self.BACKGROUND:
-            bg.file_set(self.BACKGROUND)
-        bg.size_hint_weight_set(1.0, 1.0)
-        bg.show()
+        if ecore.evas.engine_type_supported_get("software_16_x11"):
+            f = ecore.evas.SoftwareX11_16
+        else:
+			print "warning: x11-16 is not supported, fallback to x11"
+			f = ecore.evas.SoftwareX11
 
-        mainbox = elementary.Box(self.win)
-        mainbox.size_hint_weight_set(1.0, 1.0)
-        self.win.resize_object_add(mainbox)
-        mainbox.show()
-
-        # Panel
-        panelBox = elementary.Box(self.win)
-        panelBox.size_hint_align_set(-1.0, 0.0)
-        panelBox.horizontal_set(True)
-        mainbox.pack_end(panelBox)
-        panelBox.show()
-
-        leftBox = elementary.Box(self.win)
-        leftBox.size_hint_weight_set(0.5, 0.5)
-        leftBox.size_hint_align_set(0.0, 0.0)
-        leftBox.horizontal_set(True)
-        panelBox.pack_end(leftBox)
-        leftBox.show()
-        self.signalIcon = elementary.Icon(self.win)
-        self.signalIcon.file_set('/usr/share/shr-today/gsm_no.png')
-        self.signalIcon.scale_set(1, 0)
-        elementary.Photo.scale_set(self.signalIcon, 0.8)
-        self.signalIcon.show()
-        leftBox.pack_end(self.signalIcon)
-        self.gsmLabel = elementary.Label(self.win)
-        self.gsmLabel.label_set(" ")
-        leftBox.pack_end(self.gsmLabel)
-        if self.PROVIDER == "True":
-            self.gsmLabel.show()
-
-        rightBox = elementary.Box(self.win)
-        rightBox.size_hint_weight_set(0.5, 0.5)
-        rightBox.size_hint_align_set(1.0, 0.0)
-        rightBox.horizontal_set(True)
-        #rightBox.homogenous_set(True)
-        panelBox.pack_end(rightBox)
-        rightBox.show()
-
-        self.bluetoothIcon = elementary.Icon(self.win)
-        self.bluetoothIcon.file_set('/usr/share/shr-today/bluetooth.png')
-        self.bluetoothIcon.scale_set(1, 0)
-        elementary.Photo.scale_set(self.bluetoothIcon, 0.8)
-        rightBox.pack_end(self.bluetoothIcon)
-
-        self.wifiIcon = elementary.Icon(self.win)
-        self.wifiIcon.file_set('/usr/share/shr-today/wifi.png')
-        self.wifiIcon.scale_set(1, 0)
-        elementary.Photo.scale_set(self.wifiIcon, 0.8)
-        rightBox.pack_end(self.wifiIcon)
-
-        self.gpsIcon = elementary.Icon(self.win)
-        self.gpsIcon.file_set('/usr/share/shr-today/gps.png')
-        self.gpsIcon.scale_set(1, 0)
-        elementary.Photo.scale_set(self.gpsIcon, 0.8)
-        rightBox.pack_end(self.gpsIcon)
-
-        self.displayIcon = elementary.Icon(self.win)
-        self.displayIcon.file_set('/usr/share/shr-today/display.png')
-        self.displayIcon.scale_set(1, 0)
-        elementary.Photo.scale_set(self.displayIcon, 0.8)
-        rightBox.pack_end(self.displayIcon)
-
-        self.cpuIcon = elementary.Icon(self.win)
-        self.cpuIcon.file_set('/usr/share/shr-today/cpu.png')
-        self.cpuIcon.scale_set(1, 0)
-        elementary.Photo.scale_set(self.cpuIcon, 0.8)
-        rightBox.pack_end(self.cpuIcon)
-
-        self.batteryLabel = elementary.Label(self.win)
-        self.batteryLabel.label_set(" ")
-        rightBox.pack_end(self.batteryLabel)
-        if self.BAT_CAP == "True":
-            self.batteryLabel.show()
-        self.batteryIcon = elementary.Icon(self.win)
-        self.batteryIcon.file_set('/usr/share/shr-today/bat_no.png')
-        self.batteryIcon.scale_set(1, 0)
-        elementary.Photo.scale_set(self.batteryIcon, 0.8)
-        self.batteryIcon.show()
-        rightBox.pack_end(self.batteryIcon)
-
-        #/Panel
-
-        timebox = elementary.Box(self.win)
-        timebox.show()
-
-        self.timeLabel = elementary.Label(self.win)
-        self.timeLabel.label_set("")
-        self.timeLabel.scale_set(5.5)
-        timebox.pack_end(self.timeLabel)
-        self.timeLabel.show()
-
-        self.dateLabel = elementary.Label(self.win)
-        self.dateLabel.label_set("")
-        self.dateLabel.scale_set(1.75)
-        timebox.pack_end(self.dateLabel)
-        self.dateLabel.show()
-
-        mainbox.pack_end(timebox)
-
-        subBox = elementary.Box(self.win)
-        subBox.size_hint_weight_set(1.0, 0.1)
-        mainbox.pack_end(subBox)
-        subBox.show()
-
-        self.profileLabel = elementary.Label(self.win)
-        self.profileLabel.label_set("")
-        self.profileLabel.scale_set(1.0)
-        subBox.pack_end(self.profileLabel)
-        self.profileLabel.show()
-
-        self.alarmLabel = elementary.Label(self.win)
-        self.alarmLabel.label_set("")
-        self.alarmLabel.scale_set(1.0)
-        subBox.pack_end(self.alarmLabel)
-        self.alarmLabel.show()
-
-        self.IncomingCallLabel = elementary.Label(self.win)
-        self.IncomingCallLabel.label_set("")
-        self.IncomingCallLabel.scale_set(1.75)
-        subBox.pack_end(self.IncomingCallLabel)
-        self.IncomingCallLabel.show()
-
-        self.callsLabel = elementary.Label(self.win)
-        self.callsLabel.label_set("")
-        self.callsLabel.scale_set(1.75)
-        subBox.pack_end(self.callsLabel);
-        self.callsLabel.show()
-
-        self.messagesLabel = elementary.Label(self.win)
-        self.messagesLabel.label_set("")
-        self.messagesLabel.scale_set(1.75)
-        subBox.pack_end(self.messagesLabel);
-        self.messagesLabel.show()
-
-        self.tasksLabel = elementary.Label(self.win)
-        self.tasksLabel.label_set("")
-        self.tasksLabel.scale_set(1.75)
-        subBox.pack_end(self.tasksLabel);
-        self.tasksLabel.show()
-
-        toggleframe = elementary.Frame(self.win)
-        toggleframe.style_set('pad_medium')
-        self.toggle = elementary.Toggle(self.win)
-        self.toggle.label_set("")
-        self.toggle.states_labels_set("unlock", "slide to unlock")
-        self.toggle.scale_set(2.0)
-        self.toggle.changed = self.toggleChanged
-        self.toggle.state_set(False)
-        toggleframe.content_set(self.toggle)
-        toggleframe.show()
-        mainbox.pack_end(toggleframe)
-        self.toggle.show()
+        self.ee = f(w=480, h=640)
+        self.ee.fullscreen = True
+        self.c = edje.Edje(self.ee.evas,file=self.STYLE,group="shr-today")
+        self.c.size = self.ee.evas.size
+        self.c.signal_callback_add("unlockScreen","slider",self.unlockScreen)
+        self.c.show()
 
         self.alarm = 0
         self.updateScreen()
@@ -225,16 +70,26 @@ class MainWindow:
     def make_proxies(self):
         if not self.proxies:
             try:
-                self.proxy = dbus.Interface(self.bus.get_object('org.freesmartphone.odeviced', '/org/freesmartphone/Device/Display/0'), dbus_interface='org.freesmartphone.Device.Display')
-                self.contactsproxy = dbus.Interface(self.bus.get_object('org.freesmartphone.opimd', '/org/freesmartphone/PIM/Contacts'), dbus_interface='org.freesmartphone.PIM.Contacts')
-                self.messagesproxy = dbus.Interface(self.bus.get_object('org.freesmartphone.opimd', '/org/freesmartphone/PIM/Messages'), dbus_interface='org.freesmartphone.PIM.Messages')
-                self.callsproxy = dbus.Interface(self.bus.get_object('org.freesmartphone.opimd', '/org/freesmartphone/PIM/Calls'), dbus_interface='org.freesmartphone.PIM.Calls')
-                self.tasksproxy = dbus.Interface(self.bus.get_object('org.freesmartphone.opimd', '/org/freesmartphone/PIM/Tasks'), dbus_interface='org.freesmartphone.PIM.Tasks')
-                self.batteryproxy = dbus.Interface(self.bus.get_object('org.freesmartphone.odeviced', '/org/freesmartphone/Device/PowerSupply'), dbus_interface='org.freesmartphone.Device.PowerSupply')
-                self.profileproxy = dbus.Interface(self.bus.get_object('org.freesmartphone.opreferencesd', '/org/freesmartphone/Preferences'), dbus_interface='org.freesmartphone.Preferences')
-                self.gsmproxy = dbus.Interface(self.bus.get_object('org.freesmartphone.ogsmd', '/org/freesmartphone/GSM/Device'), dbus_interface='org.freesmartphone.GSM.Network')
-                self.simproxy = dbus.Interface(self.bus.get_object('org.freesmartphone.ogsmd', '/org/freesmartphone/GSM/Device'), dbus_interface='org.freesmartphone.GSM.SIM')
-                self.alarmproxy = dbus.Interface(self.bus.get_object('org.freesmartphone.odeviced', '/org/freesmartphone/Device/RTC/0'), dbus_interface='org.freesmartphone.Device.RealtimeClock')
+                self.proxy = dbus.Interface(self.bus.get_object('org.freesmartphone.odeviced',\
+                    '/org/freesmartphone/Device/Display/0'), dbus_interface='org.freesmartphone.Device.Display')
+                self.contactsproxy = dbus.Interface(self.bus.get_object('org.freesmartphone.opimd',\
+                    '/org/freesmartphone/PIM/Contacts'), dbus_interface='org.freesmartphone.PIM.Contacts')
+                self.messagesproxy = dbus.Interface(self.bus.get_object('org.freesmartphone.opimd',\
+                    '/org/freesmartphone/PIM/Messages'), dbus_interface='org.freesmartphone.PIM.Messages')
+                self.callsproxy = dbus.Interface(self.bus.get_object('org.freesmartphone.opimd',\
+                    '/org/freesmartphone/PIM/Calls'), dbus_interface='org.freesmartphone.PIM.Calls')
+                self.tasksproxy = dbus.Interface(self.bus.get_object('org.freesmartphone.opimd',\
+                    '/org/freesmartphone/PIM/Tasks'), dbus_interface='org.freesmartphone.PIM.Tasks')
+                self.batteryproxy = dbus.Interface(self.bus.get_object('org.freesmartphone.odeviced',\
+                    '/org/freesmartphone/Device/PowerSupply'), dbus_interface='org.freesmartphone.Device.PowerSupply')
+                self.profileproxy = dbus.Interface(self.bus.get_object('org.freesmartphone.opreferencesd',\
+                    '/org/freesmartphone/Preferences'), dbus_interface='org.freesmartphone.Preferences')
+                self.gsmproxy = dbus.Interface(self.bus.get_object('org.freesmartphone.ogsmd',\
+                    '/org/freesmartphone/GSM/Device'), dbus_interface='org.freesmartphone.GSM.Network')
+                self.simproxy = dbus.Interface(self.bus.get_object('org.freesmartphone.ogsmd',\
+                    '/org/freesmartphone/GSM/Device'), dbus_interface='org.freesmartphone.GSM.SIM')
+                self.alarmproxy = dbus.Interface(self.bus.get_object('org.freesmartphone.odeviced',\
+                    '/org/freesmartphone/Device/RTC/0'), dbus_interface='org.freesmartphone.Device.RealtimeClock')
                 self.profileChanged(self.profileproxy.GetProfile())
                 self.NewMissedCalls(self.callsproxy.GetNewMissedCalls())
                 self.UnreadMessages(self.messagesproxy.GetUnreadMessages())
@@ -242,14 +97,15 @@ class MainWindow:
                 try:
                     self.batteryStatus(self.batteryproxy.GetCapacity())
                 except:
-                    self.batteryproxy = dbus.Interface(self.bus.get_object('org.freesmartphone.odeviced', '/org/freesmartphone/Device/PowerSupply/battery'), dbus_interface='org.freesmartphone.Device.PowerSupply')
+                    self.batteryproxy = dbus.Interface(self.bus.get_object('org.freesmartphone.odeviced',\
+                        '/org/freesmartphone/Device/PowerSupply/battery'), dbus_interface='org.freesmartphone.Device.PowerSupply')
                     self.batteryStatus(self.batteryproxy.GetCapacity())
-                if self.config.get("general", "show_alarm") == "True":
-                    self.alarmproxy.GetWakeupTime(reply_handler=self.alarmChanged, error_handler=self.dbus_err)
+                self.alarmproxy.GetWakeupTime(reply_handler=self.alarmChanged, error_handler=self.dbus_err)
                 self.gsmStatus(self.gsmproxy.GetStatus())
                 self.proxies = True
                 return True
             except:
+            	print "Error in make Proxies"
                 return False
         else:
             return True
@@ -262,10 +118,10 @@ class MainWindow:
         if self.make_proxies():
             name = self.contactsproxy.GetSingleEntrySingleField({'Phone':'tel:'+number}, 'Name')
         if not name:
-            name = number
+            name = "Unknown Number"
         return name
 
-    def dbus_suspend_handler(self, name):
+    def suspendHandler(self, name):
         """Locks the screen on suspend"""
         if name == "SUSPEND":
             if self.SMOOTH_SUSPEND == "True" and self.make_proxies():
@@ -274,15 +130,15 @@ class MainWindow:
         elif name == "RESUME" and self.SMOOTH_SUSPEND == "True" and self.make_proxies():
             self.proxy.SetBacklightPower(True)
 
-    def dbus_aux_handler(self, name, action, seconds):
+    def auxHandler(self, name, action, seconds):
         """Locks the screen on AUX keypress < 2 sec"""
-        if name == "AUX" and action == "released" and int(seconds) < 2:
+        if name == "AUX" and action == "released" and int(seconds) < 2 and self.AUX_LOCK == "True":
             if self.locked:
                 self.unlockScreen()
             else:
                 self.lockScreen()
 
-    def dbus_idle_handler(self, name):
+    def idleHandler(self, name):
         """Locks the screen on FSO 'lock' signal"""
         if name == "lock":
             self.lockScreen()
@@ -294,96 +150,45 @@ class MainWindow:
                 self.signalStatus(-1)
         elif resource=='Bluetooth':
             if state:
-                self.bluetoothIcon.show()
+                self.c.signal_emit("","activateBluetoothResource")
             else:
-                self.bluetoothIcon.hide()
+                self.c.signal_emit("","deactivateBluetoothResource")
         elif resource=='WiFi':
             if state:
-                self.wifiIcon.show()
+                self.c.signal_emit("","activateWifiResource")
             else:
-                self.wifiIcon.hide()
+                self.c.signal_emit("","deactivateWifiResource")
         elif resource=='GPS':
             if state:
-                self.gpsIcon.show()
+                self.c.signal_emit("","activateGpsResource")
             else:
-                self.gpsIcon.hide()
+                self.c.signal_emit("","deactivateGpsResource")
         elif resource=='CPU':
             if state:
-                self.cpuIcon.show()
+                self.c.signal_emit("","activateCpuResource")
             else:
-                self.cpuIcon.hide()
+                self.c.signal_emit("","deactivateCpuResource")
         elif resource=='Display':
             if state:
-                self.displayIcon.show()
+                self.c.signal_emit("","activateDisplayResource")
             else:
-                self.displayIcon.hide()
+                self.c.signal_emit("","deactivateDisplayResource")
 
     def batteryStatus(self, capacity):
-        if capacity > 0 and capacity <= 10:
-            icon='10'
-        elif capacity>10 and capacity <= 20:
-            icon='20'
-        elif capacity>20 and capacity <= 40:
-            icon='40'
-        elif capacity>40 and capacity <= 60:
-            icon='60'
-        elif capacity>60 and capacity <= 80:
-            icon='80'
-        elif capacity>80:
-            icon='100'
-        else:
-            icon='no'
-        self.batteryIcon.file_set('/usr/share/shr-today/bat_'+icon+'.png')
-        if divmod(capacity, 20)[1]==0:
-            alpha = 0
-        alpha = 80 - divmod(capacity, 20)[1]*4
-        if self.BLACK_PANEL=='True':
-            color = 0
-        else:
-            color = 255
-        if self.ALPHA_PANEL=='True':
-            alpha = 255-alpha
-        else:
-            alpha = 255
-        self.batteryIcon.color_set(color, color, color, alpha)
-        self.batteryLabel.label_set(str(capacity)+"% ")
+        self.c.signal_emit(str(capacity),"batteryPowerChange")
 
     def signalStatus(self, strength):
-        if strength > 0 and strength <= 20:
-            icon='0'
-        elif strength>20 and strength <= 40:
-            icon='1'
-        elif strength>40 and strength <= 60:
-            icon='2'
-        elif strength>60 and strength <= 80:
-            icon='3'
-        elif strength>80:
-            icon='4'
-        else:
-            icon='no'
-        self.signalIcon.file_set('/usr/share/shr-today/gsm_'+icon+'.png')
-        if divmod(strength, 20)[1]==0:
-            alpha = 0
-        alpha = 80 - divmod(strength, 20)[1]*4
-        if self.BLACK_PANEL=='True':
-            color = 0
-        else:
-            color = 255
-        if self.ALPHA_PANEL=='True':
-            alpha = 255-alpha
-        else:
-            alpha = 255
-        self.signalIcon.color_set(color, color, color, alpha)
+        self.c.signal_emit(str(strength),"gsmSignalChange")
 
     def gsmProvider(self, provider, *args, **kargs):
         if provider:
-            self.gsmLabel.label_set(' '+elementary.Entry.utf8_to_markup(provider))
+            self.c.part_text_set("gsmProvider", provider)
         else:
-            self.gsmLabel.label_set(' ')
+            self.c.part_text_set("gsmProvider", provider)
 
     def gsmStatus(self, gsmStatus):
         """Updates GSM-Info on change"""
-        self.signalStatus(gsmStatus['strength'])
+        self.c.signal_emit(str(gsmStatus['strength']),"gsmSignalChange")
         if self.SIM_ISSUER == "True":
             if gsmStatus.get('registration') == "home":
                 self.simproxy.GetIssuer(reply_handler=self.gsmProvider, error_handler=partial(self.gsmProvider, gsmStatus.get('provider')))
@@ -392,86 +197,84 @@ class MainWindow:
             gsmProvider = ' '
         else:
             gsmProvider = gsmStatus['provider']
-        self.gsmLabel.label_set(' '+elementary.Entry.utf8_to_markup(gsmProvider))
+        self.c.signal_emit(gsmProvider,"gsmSignalChange")
 
     def IncomingCall(self, *args):
         """Updates screen on incoming call"""
         if args[1] == "incoming":
             if self.UNLOCK_ON_INCOMING_CALL == "True":
                 self.unlockScreen()
-            self.IncomingCallLabel.label_set(elementary.Entry.utf8_to_markup(self.resolve_number(args[2]['peer']))+" is calling")
+            self.c.signal_emit("","activate_incomingCall")
+            self.c.part_text_set("incomingCallHeading", "Incoming Call:")
+            self.c.part_text_set("incomingCallLine1", self.resolve_number(args[2]['peer'])+" is calling")
+            self.c.part_text_set("incomingCallLine2", args[2]['peer'])
         elif args[1] == "active":
-            self.IncomingCallLabel.label_set("active call")
+            self.c.part_text_set("incomingCallHeading", "Active Call:")
         elif args[1] == "release":
-            self.IncomingCallLabel.label_set("")
+            self.c.signal_emit("","deactivate_incomingCall")
+            self.c.part_text_set("incomingCallHeading", "")
+            self.c.part_text_set("incomingCallLine1", "")
+            self.c.part_text_set("incomingCallLine2", "")
 
     def NewMissedCalls(self, missedCalls):
         """Updates screen on new missed call"""
         if missedCalls == 0:
-            self.callsLabel.label_set("")
-        elif missedCalls == 1:
-            self.callsLabel.label_set(str(missedCalls)+" missed call")
+            self.c.signal_emit("","hideMissedCalls")
+            self.c.part_text_set("missedCallsLabel", "")
         else:
-            self.callsLabel.label_set(str(missedCalls)+" missed calls")
+            self.c.signal_emit("","showMissedCalls")
+            self.c.part_text_set("missedCallsLabel", str(missedCalls))
 
     def UnfinishedTasks(self, unfinishedTasks):
         """Updates screen on new task"""
         if unfinishedTasks == 0:
-            self.tasksLabel.label_set("")   
-        elif unfinishedTasks == 1:
-            self.tasksLabel.label_set(str(unfinishedTasks)+" unfinished task")
+            self.c.signal_emit("","hideUnfinishedTasks")
+            self.c.part_text_set("unfinishedTasksLabel", "")
         else:
-            self.tasksLabel.label_set(str(unfinishedTasks)+" unfinished tasks")
+            self.c.signal_emit("","showUnfinishedTasks")
+            self.c.part_text_set("unfinishedTasksLabel", str(unfinishedTasks))
 
     def UnreadMessages(self, unreadMessages):
         """Updates screen on new unread message"""
         if unreadMessages == 0:
-            self.messagesLabel.label_set("")
-        elif unreadMessages == 1:
-            self.messagesLabel.label_set(str(unreadMessages)+" unread message")
+            self.c.signal_emit("","hideUnreadMessages")
+            self.c.part_text_set("UnreadMessagesLabel", "")
         else:
-            self.messagesLabel.label_set(str(unreadMessages)+" unread messages")
-
-    def toggleChanged(self, obj, event, *args, **kargs):
-        """Unlocks Screen if toggle is slided"""
-        if self.toggle.state_get():
-            self.unlockScreen()
-            self.toggle.state_set(False)
+            self.c.signal_emit("","showUnreadMessages")
+            self.c.part_text_set("UnreadMessagesLabel", str(unreadMessages))
 
     def lockScreen(self):
         """Locks the screen"""
         self.make_proxies()
         self.locked = True
-        self.win.fullscreen_set(True)
-        self.win.show()
+        self.ee.show()
 
-    def unlockScreen(self):
+    def unlockScreen(self, obj="", signal="", source=""):
         """Unlocks the screen"""
         self.locked = False
-        self.win.hide()
+        self.ee.hide()
 
     def profileChanged(self, currentProfile):
         if currentProfile == 'default':
-            currentProfile = ''
-        if currentProfile:
-            currentProfile = elementary.Entry.utf8_to_markup(currentProfile.capitalize())
-        self.profileLabel.label_set(currentProfile)
+            self.c.part_text_set("profile", "")
+        else:
+            self.c.part_text_set("profile", currentProfile.capitalize())
 
     def alarmChanged(self, rtcWakeupTime):
         self.alarm = rtcWakeupTime
         if rtcWakeupTime > time.mktime(time.localtime()):
             wakeupTime = time.localtime(float(rtcWakeupTime))
-            self.alarmLabel.label_set("Next alarm: "+time.strftime(self.config.get("format", "date")+" "+self.config.get("format", "time"), wakeupTime))
+            self.c.signal_emit("","activateAlarm")
         else:
-            self.alarmLabel.label_set("")
+            self.c.signal_emit("","deactivateAlarm")
 
     def updateScreen(self):
         """Updates the time and date labels on the screen every 10 seconds"""
         t = time.localtime()
-        self.timeLabel.label_set(time.strftime(self.config.get("format", "time"), t))
-        self.dateLabel.label_set(time.strftime(self.config.get("format", "date"), t))
+        self.c.part_text_set("time", time.strftime(self.config.get("format", "time"), t))
+        self.c.part_text_set("date", time.strftime(self.config.get("format", "date"), t))
         if self.alarm < time.mktime(t):
-            self.alarmLabel.label_set("")
+            self.c.signal_emit("","deactivateAlarm")
         return True
 
     def destroy(self, obj, event, *args, **kargs):
@@ -482,7 +285,5 @@ class MainWindow:
             pass
 
 if __name__ == "__main__":
-    elementary.init()
-    win = MainWindow()
-    elementary.run()
-    elementary.shutdown()
+    win = Main()
+    ecore.main_loop_begin();

@@ -1,5 +1,0 @@
-SHR-Today is a screen-locking application for SHR.
-It’s wirtten using python, elementary and the opimd subsystem.
-
-It notifies about missed and incoming calls and about unread messages.
-It locks the screen by AUX-press, by the FSO “lock” signal and by going to suspend.
