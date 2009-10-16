@@ -130,11 +130,11 @@ class Main:
 
     def suspendHandler(self, name):
         """Locks the screen on suspend"""
-        if name == "SUSPEND":
+        if name == "SUSPEND" or name == "suspend":
             if self.SMOOTH_SUSPEND == "True" and self.make_proxies():
                 self.proxy.SetBacklightPower(False)
             self.lockScreen()
-        elif name == "RESUME" and self.SMOOTH_SUSPEND == "True" and self.make_proxies():
+        elif (name == "RESUME" or name = "resume") and self.SMOOTH_SUSPEND == "True" and self.make_proxies():
             self.proxy.SetBacklightPower(True)
 
     def auxHandler(self, name, action, seconds):
