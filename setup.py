@@ -36,5 +36,6 @@ setup(
     data_files = [
         ( "/etc", ["data/shr-today.conf"] ),
         ( "/usr/share/shr-today", ["data/wallpaper.png", "data/slider.edj"] ),
+        ( "/etc/X11/Xsession.d", ["data/89shr-today", "data/slider.edj"] ),
         ]
 )
