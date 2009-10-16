@@ -1,38 +1,40 @@
-import sys
+# -*- coding: utf-8 -*-
+
+from distutils.core import setup
+from distutils.extension import Extension
+from Cython.Distutils import build_ext
+from distutils.command.build import build as _build
+from distutils.command.clean import clean as _clean
 import os
 
-from ez_setup import use_setuptools
-use_setuptools('0.6c3')
+class my_build(_build):
+    def run(self):
+        _build.run(self)
 
-from setuptools import setup, find_packages, Extension
-from distutils.sysconfig import get_python_inc
-from glob import glob
-import commands
+        # compile theme files
+        import subprocess
+        result = subprocess.call( "cd ./data/slider; edje_cc -v slider.edc; mv slider.edj ../", shell=True )
+        if result != 0:
+            raise Exception( "Can't build theme files. Built edje_cc?" )
 
+class my_clean(_clean):
+    def run(self):
+        _clean.run(self)
 
-dist = setup( name='shr-today',
-    version='0.7.0',
-    author='Lukas \'Slyon\' Märdian',
-    author_email='lukasmaerdian@googlemail.com',
-    description='python-edje and opimd based lock and today screen for the SHR distribution',
-    url='http://wiki.github.com/slyon/today',
-    download_url='git://github.com/slyon/today.git',
-    license='GNU GPL',
-    scripts=['shr-today'],
-    data_files=[('/etc', ['data/shr-today.conf']),
-        ('/usr/share/shr-today', glob('data/*/*.edj')),
-        ('/usr/share/shr-today', ['data/wallpaper.png']),
-        ('/etc/X11/Xsession.d/', ['data/89shr-today'])]
+        if os.path.exists('./data/slider.edj'):
+            os.remove('./data/slider.edj')
+
+setup(
+    name = "shr-today",
+    version = "0.7.0+git",
+    author = "Lukas 'Slyon' Märdian",
+    author_email = "lukasmaerdian@googlemail.com",
+    url = "http://wiki.github.com/slyon/today",
+    cmdclass = { 'build'    : my_build ,
+                 'clean'    : my_clean },
+    scripts = [ "shr-today" ],
+    data_files = [
+        ( "/etc", ["data/shr-today.conf"] ),
+        ( "/usr/share/shr-today", ["data/wallpaper.png", "data/slider.edj"] ),
+        ]
 )
-
-installCmd = dist.get_command_obj(command="install_data")
-installdir = installCmd.install_dir
-installroot = installCmd.root
-
-if not installroot:
-    installroot = ""
-
-if installdir:
-    installdir = os.path.join(os.path.sep,
-        installdir.replace(installroot, ""))
-
