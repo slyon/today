@@ -12,7 +12,7 @@ Simple screen-locking app using opimd.
 
 #!/usr/bin/env python
 
-import ecore, ecore.evas, edje, elementary
+import ecore, ecore.evas, edje
 import sys, os, time
 import dbus, e_dbus
 from functools import partial
