@@ -34,8 +34,8 @@ setup(
                  'clean'    : my_clean },
     scripts = [ "shr-today" ],
     data_files = [
-        ( "/etc", ["data/shr-today.conf"] ),
-        ( "/usr/share/shr-today", ["data/wallpaper.png", "data/slider.edj"] ),
-        ( "/etc/X11/Xsession.d", ["data/89shr-today", "data/slider.edj"] ),
+        ( "../../etc", ["data/shr-today.conf"] ),
+        ( "shr-today", ["data/wallpaper.png", "data/slider.edj"] ),
+        ( "../../etc/X11/Xsession.d", ["data/89shr-today", "data/slider.edj"] ),
         ]
 )
