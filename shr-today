@@ -33,20 +33,21 @@ class Main:
         self.proxies = False
 
         self.bus = dbus.SystemBus(mainloop = e_dbus.DBusEcoreMainLoop())
-        self.bus.add_signal_receiver(self.suspendHandler, dbus_interface="org.freesmartphone.Usage", signal_name="SystemAction")
-        self.bus.add_signal_receiver(self.auxHandler, dbus_interface="org.freesmartphone.Device.Input", signal_name="Event")
-        self.bus.add_signal_receiver(self.idleHandler, dbus_interface="org.freesmartphone.Device.IdleNotifier", signal_name="State")
-        self.bus.add_signal_receiver(self.IncomingCall, dbus_interface="org.freesmartphone.GSM.Call", signal_name="CallStatus")
-        self.bus.add_signal_receiver(self.NewMissedCalls, dbus_interface="org.freesmartphone.PIM.Calls", signal_name="NewMissedCalls")
-        self.bus.add_signal_receiver(self.UnfinishedTasks, dbus_interface="org.freesmartphone.PIM.Tasks", signal_name="UnfinishedTasks")
-        self.bus.add_signal_receiver(self.UnreadMessages, dbus_interface="org.freesmartphone.PIM.Messages", signal_name="UnreadMessages")
-        self.bus.add_signal_receiver(self.gsmStatus, dbus_interface="org.freesmartphone.GSM.Network", signal_name="Status")
-        self.bus.add_signal_receiver(self.signalStatus, dbus_interface="org.freesmartphone.GSM.Network", signal_name="SignalStrength")
-        self.bus.add_signal_receiver(self.profileChanged, dbus_interface="org.freesmartphone.Preferences", signal_name="Notify")
-        self.bus.add_signal_receiver(self.batteryStatus, dbus_interface="org.freesmartphone.Device.PowerSupply", signal_name="Capacity")
-        self.bus.add_signal_receiver(self.resourceStatus, dbus_interface="org.freesmartphone.Usage", signal_name="ResourceChanged")
-        self.bus.add_signal_receiver(self.alarmChanged, dbus_interface="org.freesmartphone.Device.RealtimeClock", signal_name="WakeupTimeChanged")
 
+        self.bus.add_signal_receiver(self.auxHandler,      dbus_interface="org.freesmartphone.Device.Input",         signal_name="Event")
+        self.bus.add_signal_receiver(self.idleHandler,     dbus_interface="org.freesmartphone.Device.IdleNotifier",  signal_name="State")
+        self.bus.add_signal_receiver(self.alarmChanged,    dbus_interface="org.freesmartphone.Device.RealtimeClock", signal_name="WakeupTimeChanged")
+        self.bus.add_signal_receiver(self.batteryStatus,   dbus_interface="org.freesmartphone.Device.PowerSupply",   signal_name="Capacity")
+        self.bus.add_signal_receiver(self.IncomingCall,    dbus_interface="org.freesmartphone.GSM.Call",             signal_name="CallStatus")
+        self.bus.add_signal_receiver(self.gsmStatus,       dbus_interface="org.freesmartphone.GSM.Network",          signal_name="Status")
+        self.bus.add_signal_receiver(self.signalStatus,    dbus_interface="org.freesmartphone.GSM.Network",          signal_name="SignalStrength")
+        self.bus.add_signal_receiver(self.NewMissedCalls,  dbus_interface="org.freesmartphone.PIM.Calls",            signal_name="NewMissedCalls")
+        self.bus.add_signal_receiver(self.NewDate,         dbus_interface="org.freesmartphone.PIM.Dates",            signal_name="NewDate")
+        self.bus.add_signal_receiver(self.UnfinishedTasks, dbus_interface="org.freesmartphone.PIM.Tasks",            signal_name="UnfinishedTasks")
+        self.bus.add_signal_receiver(self.UnreadMessages,  dbus_interface="org.freesmartphone.PIM.Messages",         signal_name="UnreadMessages")
+        self.bus.add_signal_receiver(self.profileChanged,  dbus_interface="org.freesmartphone.Preferences",          signal_name="Notify")
+        self.bus.add_signal_receiver(self.suspendHandler,  dbus_interface="org.freesmartphone.Usage",                signal_name="SystemAction")
+        self.bus.add_signal_receiver(self.resourceStatus,  dbus_interface="org.freesmartphone.Usage",                signal_name="ResourceChanged")
 
         if ecore.evas.engine_type_supported_get("software_16_x11"):
             f = ecore.evas.SoftwareX11_16
@@ -85,6 +86,8 @@ class Main:
                     '/org/freesmartphone/PIM/Messages'), dbus_interface='org.freesmartphone.PIM.Messages')
                 self.callsproxy = dbus.Interface(self.bus.get_object('org.freesmartphone.opimd',\
                     '/org/freesmartphone/PIM/Calls'), dbus_interface='org.freesmartphone.PIM.Calls')
+                #self.datesproxy = dbus.Interface(self.bus.get_object('org.freesmartphone.opimd',\
+                #    '/org/freesmartphone/PIM/Dates'), dbus_interface='org.freesmartphone.PIM.Dates')
                 self.tasksproxy = dbus.Interface(self.bus.get_object('org.freesmartphone.opimd',\
                     '/org/freesmartphone/PIM/Tasks'), dbus_interface='org.freesmartphone.PIM.Tasks')
                 self.batteryproxy = dbus.Interface(self.bus.get_object('org.freesmartphone.odeviced',\
@@ -98,6 +101,7 @@ class Main:
                 self.alarmproxy = dbus.Interface(self.bus.get_object('org.freesmartphone.odeviced',\
                     '/org/freesmartphone/Device/RTC/0'), dbus_interface='org.freesmartphone.Device.RealtimeClock')
                 self.profileChanged(self.profileproxy.GetProfile())
+                #self.NewDate(self.datesproxy.Query({'_lt_Begin':1255789306})) #FIXME: make some real query
                 self.NewMissedCalls(self.callsproxy.GetNewMissedCalls())
                 self.UnreadMessages(self.messagesproxy.GetUnreadMessages())
                 self.UnfinishedTasks(self.tasksproxy.GetUnfinishedTasks())
@@ -231,6 +235,10 @@ class Main:
         else:
             self.c.signal_emit("","showMissedCalls")
             self.c.part_text_set("missedCallsLabel", str(missedCalls))
+
+    def NewDate(self, path):
+        """Updates screen new date"""
+        print 'New Date:', path
 
     def UnfinishedTasks(self, unfinishedTasks):
         """Updates screen on new task"""
