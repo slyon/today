@@ -217,7 +217,7 @@ class Main:
                 self.unlockScreen()
             self.c.signal_emit("","activate_incomingCall")
             self.c.part_text_set("incomingCallHeading", "Incoming Call:")
-            self.c.part_text_set("incomingCallLine1", self.resolve_number(args[2]['peer'])+" is calling")
+            self.c.part_text_set("incomingCallLine1", u"\u200E" + self.resolve_number(args[2]['peer']) + " is calling")
             self.c.part_text_set("incomingCallLine2", args[2]['peer'])
         elif args[1] == "active":
             self.c.part_text_set("incomingCallHeading", "Active Call:")
