@@ -253,10 +253,10 @@ class Main:
         """Updates screen on new unread message"""
         if unreadMessages == 0:
             self.c.signal_emit("","hideUnreadMessages")
-            self.c.part_text_set("UnreadMessagesLabel", "")
+            self.c.part_text_set("unreadMessagesLabel", "")
         else:
             self.c.signal_emit("","showUnreadMessages")
-            self.c.part_text_set("UnreadMessagesLabel", str(unreadMessages))
+            self.c.part_text_set("unreadMessagesLabel", str(unreadMessages))
 
     def lockScreen(self):
         """Locks the screen"""
