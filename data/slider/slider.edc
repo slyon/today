@@ -711,7 +711,7 @@ NOTIFICATION("incomingCall", "incomingCall.png", "Incoming Call:", "Diana D. is 
 	          script {
 	             new Float:dx, Float:dy;
 	             get_drag(PART:"slider", dx, dy);
-	             if (dx == 1.0) {
+	             if (dx > 0.9) {
 		            set_drag(PART:"slider", 0.0, 0.0);
 		            emit("unlockScreen", "slider");
 		         }
