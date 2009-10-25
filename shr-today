@@ -192,21 +192,19 @@ class Main:
         self.c.signal_emit(str(strength),"gsmSignalChange")
 
     def gsmProvider(self, provider, *args, **kargs):
-        if provider:
-            self.c.part_text_set("gsmProvider", provider)
-        else:
-            self.c.part_text_set("gsmProvider", provider)
+        """Reply-Handler for the SimIssuer/GsmProvider"""
+        self.c.part_text_set("gsmProvider", provider)
 
     def gsmStatus(self, gsmStatus):
         """Updates GSM-Info on change"""
         self.c.signal_emit(str(gsmStatus['strength']),"gsmSignalChange")
-        if ( self.SIM_ISSUER == "True" ) and ( gsmStatus.get('registration') == "home" ):
-            self.simproxy.GetIssuer(reply_handler=self.gsmProvider, error_handler=partial(self.gsmProvider, gsmStatus.get('provider')))
-        elif not gsmStatus['provider'] or gsmStatus['provider'] == " ":
-            gsmProvider = 'unknown'
-        else:
-            gsmProvider = gsmStatus['provider']
-        self.c.signal_emit(gsmProvider,"gsmSignalChange")
+        if self.PROVIDER == "True":
+            if ( self.SIM_ISSUER == "True" ) and ( gsmStatus.get('registration') == "home" ):
+                self.simproxy.GetIssuer(reply_handler=self.gsmProvider, error_handler=partial(self.gsmProvider, gsmStatus.get('provider')))
+            elif ( len(gsmStatus['provider'] > 1 ) and ( gsmStatus['provider'] != ' ' ):
+                self.gsmProvider(gsmStatus['provider'])
+            else:
+                self.gsmProvider('unknown')
 
     def IncomingCall(self, *args):
         """Updates screen on incoming call"""
