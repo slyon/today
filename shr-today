@@ -201,7 +201,7 @@ class Main:
         if self.PROVIDER == "True":
             if ( self.SIM_ISSUER == "True" ) and ( gsmStatus.get('registration') == "home" ):
                 self.simproxy.GetIssuer(reply_handler=self.gsmProvider, error_handler=partial(self.gsmProvider, gsmStatus.get('provider')))
-            elif ( len(gsmStatus['provider'] > 1 ) and ( gsmStatus['provider'] != ' ' ):
+            elif ( len(gsmStatus['provider']) > 1 ) and ( gsmStatus['provider'] != ' ' ):
                 self.gsmProvider(gsmStatus['provider'])
             else:
                 self.gsmProvider('unknown')
