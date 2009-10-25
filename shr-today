@@ -10,8 +10,6 @@ GPLv2 or later
 Simple screen-locking app using opimd.
 """
 
-#!/usr/bin/env python
-
 import ecore, ecore.evas, edje
 import sys, os, time
 import dbus, e_dbus
