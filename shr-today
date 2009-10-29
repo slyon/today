@@ -55,14 +55,16 @@ class Main:
 
         self.ee = f(w=480, h=640)
         self.ee.fullscreen = True
-        self.ee.alpha_set(True) #this needs compositing
+        if self.WALLPAPER == "transparent":
+            """this needs compositing"""
+            self.ee.alpha_set(True)
         self.ee.title = "SHR-Today"
         self.c = edje.Edje(self.ee.evas,file=self.STYLE,group="shr-today")
 
         #Swallow in the wallpaper
         self.wallpaper = self.c.evas.FilledImage()
         if self.WALLPAPER == "transparent":
-            """this needs a composite manager"""
+            """this needs compositing"""
             self.wallpaper.file_set('/usr/share/shr-today/wallpaper-transparent.png')
         else:
             self.wallpaper.file_set(self.WALLPAPER)
