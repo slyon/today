@@ -1,4 +1,5 @@
 * use FSO orientation API, when available
+* alpha -> check for compositing. if not available -> ee.shape_set(True)
 * optimize the slider theme
 * make a palm pre like theme
 * more async in make_proxies
