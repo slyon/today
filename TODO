@@ -1,4 +1,5 @@
 * use FSO orientation API, when available
+* Alpha Background
 * optimize the slider theme
 * make a palm pre like theme
 * more async in make_proxies
