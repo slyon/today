@@ -35,7 +35,6 @@ collections {
    group {
       name: "shr-today";
       	parts {
-
 	    part {
 	       name: "background";
 	       type: SWALLOW;
@@ -46,6 +45,7 @@ collections {
 	          rel2 { relative: 1.0 1.0; }
 	       }
 	    }
+
 /////////////////////////////////// TOPBAR /////////////////////////////////////
 	    part {
 	       name: "topbar";

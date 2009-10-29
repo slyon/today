@@ -35,7 +35,7 @@ setup(
     scripts = [ "shr-today" ],
     data_files = [
         ( "../../etc", ["data/shr-today.conf"] ),
-        ( "shr-today", ["data/wallpaper.png", "data/slider.edj"] ),
+        ( "shr-today", ["data/wallpaper.png", "data/wallpaper-transparent.png", "data/slider.edj"] ),
         ( "../../etc/X11/Xsession.d", ["data/89shr-today"] ),
         ]
 )
