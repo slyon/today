@@ -57,6 +57,12 @@ collections {
 	          rel1 { relative: 0.0 0.0; }
 	          rel2 { relative: 1.0 0.0; offset: 0 30; }
 	       }
+               description {
+                  state: "hidden" 0.0;
+                  color: 0 0 0 255;
+                  rel1 { relative: 0.0 0.0; offset: 0 -180; }
+                  rel2 { relative: 1.0 0.0; offset: 0 -150; }
+               }
 	    }
 
 	    part {
@@ -600,6 +606,13 @@ NOTIFICATION("incomingCall", "incomingCall.png", "Incoming Call:", "Diana D. is 
 	          rel1 { relative: 0.0 1.0; offset: 0 -120; }
 	          rel2 { relative: 1.0 1.0; offset: 0 0;}
 	       }
+               description {
+                  state: "hidden" 0.0;
+                  inherit: "default" 0.0;
+                  color: 255 255 255 0;
+                  rel1 { relative: 0.0 1.0; offset: 0 10; }
+                  rel2 { relative: 1.0 1.0; offset: 0 0;}
+               }
 	    }
 
 	    part {
@@ -704,6 +717,29 @@ NOTIFICATION("incomingCall", "incomingCall.png", "Incoming Call:", "Diana D. is 
         }
 
         programs {
+        program {
+          name: "unlock";
+          signal: "preUnlockScreen";
+          source: "slider";
+          action: STATE_SET "hidden" 0.0;
+          transition: ACCELERATE 0.5;
+          target: "bottom";
+          target: "topbar";
+          after: "unlock2";
+        }
+
+        program {
+          name: "unlock2";
+          action: SIGNAL_EMIT "unlockScreen" "slider";
+          after: "unlock3";
+        }
+        program {
+          name: "unlock3";
+          action: STATE_SET "default" 0.0;
+          target: "bottom";
+          target: "topbar";
+        }
+
 	       program {
 	          name:   "drag_end";
 	          signal: "mouse,up,1";
@@ -711,9 +747,9 @@ NOTIFICATION("incomingCall", "incomingCall.png", "Incoming Call:", "Diana D. is 
 	          script {
 	             new Float:dx, Float:dy;
 	             get_drag(PART:"slider", dx, dy);
-	             if (dx > 0.9) {
-		            set_drag(PART:"slider", 0.0, 0.0);
-		            emit("unlockScreen", "slider");
+	             if (dx >= 0.9) {
+                            set_drag(PART:"slider", 0.0, 0.0);
+		            emit("preUnlockScreen", "slider");
 		         }
 	             else {
 		            set_drag(PART:"slider", 0.0, 0.0);
