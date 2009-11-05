@@ -162,7 +162,7 @@ class Main:
     def resourceStatus(self, resource, state, *args, **kargs):
         if resource=='GSM':
             if not state:
-                self.gsmProvider(None)
+                self.gsmProvider('')
                 self.signalStatus(-1)
         elif resource=='Bluetooth':
             if state:
