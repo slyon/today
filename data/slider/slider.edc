@@ -13,8 +13,6 @@ spectra {
 
 collections {
    images {
-      image: "clock.png" COMP;
-      image: "bottom.png" COMP;
       image: "slider.png" COMP;
       image: "sliderbackground_left.png" COMP;
       image: "sliderbackground_middle.png" COMP;
