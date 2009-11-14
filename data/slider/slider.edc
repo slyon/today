@@ -306,6 +306,12 @@ program {                                                                      \
              spread: 0; angle: 0;
           }
        }
+       description {
+          state: "hidden" 0.0;
+          inherit: "default" 0.0;
+          rel1 { offset: 0 -200; }
+          rel2 { offset: 0 -200; }
+       }
     }
    part {
        name: "time";
@@ -749,6 +755,7 @@ NOTIFICATION("incomingCall", "incomingCall.png", "Incoming Call:", "Diana D. is 
           transition: ACCELERATE 0.5;
           target: "bottom";
           target: "topbar";
+          target: "clock";
           after: "unlock2";
         }
 
@@ -762,6 +769,7 @@ NOTIFICATION("incomingCall", "incomingCall.png", "Incoming Call:", "Diana D. is 
           action: STATE_SET "default" 0.0;
           target: "bottom";
           target: "topbar";
+          target: "clock";
         }
 
 	       program {
