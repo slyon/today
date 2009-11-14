@@ -13,6 +13,8 @@ spectra {
 
 collections {
    images {
+      image: "clock.png" COMP;
+      image: "bottom.png" COMP;
       image: "slider.png" COMP;
       image: "sliderbackground_left.png" COMP;
       image: "sliderbackground_middle.png" COMP;
@@ -288,7 +290,7 @@ program {                                                                      \
 
 ///////////////////////////////// CLOCK ////////////////////////////////////////
 
-    part {
+/*    part {
        name: "clock";
        type: GRADIENT;
        mouse_events: 0;
@@ -312,7 +314,26 @@ program {                                                                      \
           rel1 { offset: 0 -200; }
           rel2 { offset: 0 -200; }
        }
+    } */
+
+    part {
+       name: "clock";
+       type: IMAGE;
+       mouse_events: 0;
+       description {
+          state: "default" 0.0;
+          image { normal: "clock.png"; }
+          rel1 {  relative: 0.0 0.046875; offset: 0 0; }
+          rel2 {  relative: 1.0 0.234375; offset: 0 0; }
+       }
+       description {
+          state: "hidden" 0.0;
+          inherit: "default" 0.0;
+          rel1 { offset: 0 -200; }
+          rel2 { offset: 0 -200; }
+       }
     }
+
    part {
        name: "time";
        type: TEXT;
@@ -622,7 +643,7 @@ NOTIFICATION("incomingCall", "incomingCall.png", "Incoming Call:", "Diana D. is 
 		}
 
 //////////////////////////////// BOTTOM ////////////////////////////////////////
-	    part {
+/*	    part {
 	       name: "bottom";
 	       type: GRADIENT;
 	       mouse_events: 0;
@@ -637,6 +658,25 @@ NOTIFICATION("incomingCall", "incomingCall.png", "Incoming Call:", "Diana D. is 
                  rel2 { relative: 0.0 1.0; offset: 0 0; }
               }
               fill { spread: 0; angle: 0; }
+           }
+           description {
+              state: "hidden" 0.0;
+              inherit: "default" 0.0;
+              color: 0 0 0 255;
+              rel1 { relative: 0.0 1.0; offset: 0 120; }
+              rel2 { relative: 1.0 1.0; offset: 0 0;}
+           }
+	    } */
+
+	    part {
+	       name: "bottom";
+	       type: IMAGE;
+	       mouse_events: 0;
+	       description {
+	          state: "default" 0.0;
+	          image { normal: "bottom.png"; }
+	          rel1 { relative: 0.0 0.8125; offset: 0 0; }
+	          rel2 { relative: 1.0 1.0; offset: 0 0;}
            }
            description {
               state: "hidden" 0.0;
