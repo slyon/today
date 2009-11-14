@@ -67,7 +67,7 @@ collections {
 	          state: "default" 0.0;
 	          color: 0 0 0 255;
 	          rel1 { relative: 0.0 0.0; }
-	          rel2 { relative: 1.0 0.0; offset: 0 30; }
+	          rel2 { relative: 1.0 0.046875; }
 	       }
            description {
               state: "hidden" 0.0;
@@ -294,8 +294,8 @@ program {                                                                      \
        mouse_events: 0;
        description {
           state: "default" 0.0;
-          rel1 { to: "topbar"; relative: 0.0 1.0; offset: 0 0; }
-          rel2 { to: "topbar"; relative: 1.0 1.0; offset: 0 120; }
+          rel1 {  relative: 0.0 0.046875; offset: 0 0; }
+          rel2 {  relative: 1.0 0.234375; offset: 0 0; }
           gradient {
              type: "linear";
              spectrum: "clock";
@@ -314,11 +314,11 @@ program {                                                                      \
           state: "default" 0.0;
           color: 255 255 255 255;
           rel1 { to: "clock"; relative: 0.0 0.0; offset: 0 0; }
-          rel2 { to: "clock"; relative: 1.0 0.0; offset: 0 70; }
+          rel2 { to: "clock"; relative: 1.0 1.0; offset: 0 0; }
           text {
               text: "";
               font: "VeraBd.ttf";
-              size: 70;
+              fit: 0 1;
           }
        }
     }
@@ -328,12 +328,12 @@ program {                                                                      \
         description {
 	        state: "default" 0.0;
 	        color: 255 255 255 255;
-	        rel1 { to: "time"; relative: 0.0 1.0; offset: 0 0; }
-	        rel2 { to: "time"; relative: 1.0 1.0; offset: 0 20; }
+	        rel1 { to: "clock"; relative: 0.0 0.0; offset: 0 0; }
+	        rel2 { to: "clock"; relative: 1.0 0.3; offset: 0 0; }
 	        text {
                 text: "";
                 font: "VeraBd.ttf";
-                size: 20;
+                fit: 0 1;
             }
 	    }
 	}
@@ -343,12 +343,12 @@ program {                                                                      \
         description {
 	        state: "default" 0.0;
 	        color: 255 255 255 255;
-	        rel1 { to: "date"; relative: 0.0 1.0; offset: 0 0; }
-	        rel2 { to: "date"; relative: 1.0 1.0; offset: 0 30; }
+	        rel1 { to: "clock"; relative: 0.0 0.8; offset: 0 0; }
+	        rel2 { to: "clock"; relative: 1.0 1.0; offset: 0 0; }
 	        text {
                 text: "";
                 font: "VeraBd.ttf";
-                size: 18;
+                fit: 0 1;
             }
 	    }
 	}
@@ -361,7 +361,7 @@ part {																			\
 	type: RECT;																	\
 	description {																\
 		state: "default" 0.0;													\
-		color: 0 0 0 230;														\
+		color: 20 20 20 255;														\
 		rel1 { to: __relTo; relative: 0.0 1.0; offset: 0 0; }					\
 		rel2 { to: __relTo; relative: 1.0 1.0; offset: 0 0; }					\
 		}																		\
@@ -376,7 +376,7 @@ part {																			\
 	type: RECT;																	\
 	description {																\
 		state: "default" 0.0;													\
-		color: 255 255 255 50;													\
+		color: 85 85 85 255;													\
 		rel1 { to: __name"Notification"; relative: 0.0 0.0; offset: 5 5; }		\
 		rel2 { to: __name"Notification"; relative: 1.0 0.0; offset: -10 0; }	\
 		}																		\
@@ -622,7 +622,7 @@ NOTIFICATION("incomingCall", "incomingCall.png", "Incoming Call:", "Diana D. is 
 	       mouse_events: 0;
 	       description {
 	          state: "default" 0.0;
-	          rel1 { relative: 0.0 1.0; offset: 0 -120; }
+	          rel1 { relative: 0.0 0.8125; offset: 0 0; }
 	          rel2 { relative: 1.0 1.0; offset: 0 0;}
               gradient {
                  type: "linear";
@@ -649,7 +649,7 @@ NOTIFICATION("incomingCall", "incomingCall.png", "Incoming Call:", "Diana D. is 
 	          state: "default" 0.0;
 	          color: 255 255 255 0;
 	          rel1 { to: "bottom"; relative: 0.07 0.2; offset: 0 0; }
-	          rel2 { to: "bottom"; relative: 0.93 0.2; offset: 0 70; }
+	          rel2 { to: "bottom"; relative: 0.93 0.8; offset: 0 0; }
 	       }
 	    }
 
@@ -672,9 +672,9 @@ NOTIFICATION("incomingCall", "incomingCall.png", "Incoming Call:", "Diana D. is 
 	       description {
 	          state: "default" 0.0;
 	          color: 0 0 0 0;
-	          min: 121 70;
+	          min: 121 72;
 	          rel1 { to: "slider-bg"; relative: 0.0 0.0; offset: 0 0; }
-	          rel2 { to: "slider-bg"; relative: 0.0 1.0; offset: 121 0; }
+	          rel2 { to: "slider-bg"; relative: 0.0 1.0; offset: 0 0; }
 	       }
 	       dragable {
 	          confine: "slider-bg";
@@ -691,10 +691,8 @@ NOTIFICATION("incomingCall", "incomingCall.png", "Incoming Call:", "Diana D. is 
 			description {
 				state: "default" 0.0;
 				image.normal: "sliderbackground_middle.png";
-				rel1.to: "slider-bg";
-				rel1.offset: 25 0;
-				rel2.to: "slider-bg";
-				rel2.offset: -25 0;
+				rel1 { to: "slider-bg"; relative: 0.0 0.0; offset: 25 0; }
+				rel2 { to: "slider-bg"; relative: 1.0 1.0; offset: -25 0; }
 				}
 			}
 
