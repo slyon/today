@@ -500,7 +500,8 @@ program {																		\
 	target: __name"Line2";														\
 	}
 
-NOTIFICATION("incomingCall", "incomingCall.png", "Incoming Call:", "Diana D. is caling", "+4916012345678", "clock");
+# name, image, heading, name, number, relto
+NOTIFICATION("incomingCall", "incomingCall.png", ":", "", "", "clock");
 
 //////////////////////////////// MIDDLE BOTTOM /////////////////////////////////
 
