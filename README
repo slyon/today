@@ -1,0 +1,4 @@
+ATTENTION:
+
+SHR-Today is deprecated, as it is now rewritten in C and
+is part of SHR's libphone-ui-shr library under the name 'idle_screen'.
